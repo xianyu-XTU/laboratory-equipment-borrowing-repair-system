@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>管理员控制面板 | 实验室设备管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e9f0f5 0%, #d4e3ed 100%);
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ecf3f8;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-area h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f5e7e;
+        }
+        .logo-area span {
+            background: #2c7da0;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: #f8fafc;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+        }
+        .user-info .name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .user-info .role {
+            background: #2c7da0;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+        }
+        .logout-btn {
+            background: none;
+            border: 1px solid #cfdfe8;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            color: #5c6f82;
+            transition: 0.2s;
+        }
+        .logout-btn:hover {
+            background: #eef2f5;
+            border-color: #2c7da0;
+        }
+
+        .main-layout {
+            display: flex;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: #fefefe;
+            border-right: 1px solid #ecf3f8;
+            padding: 1.5rem 0;
+            flex-shrink: 0;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.9rem 1.8rem;
+            margin: 0.3rem 0;
+            color: #4a627a;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+        .nav-item i { width: 24px; font-style: normal; display: inline-block; }
+        .nav-item.active {
+            background: #eef5f9;
+            color: #2c7da0;
+            border-left-color: #2c7da0;
+            font-weight: 600;
+        }
+        .nav-item:hover:not(.active) {
+            background: #f1f6fa;
+            color: #1f5e7e;
+        }
+
+        .content {
+            flex: 1;
+            background: #ffffff;
+            padding: 1.8rem 2rem;
+            overflow-x: auto;
+        }
+        .panel {
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+        .panel.active-panel {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: #f9fbfd;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            border: 1px solid #e5eef4;
+        }
+        .stat-card h3 {
+            font-size: 0.85rem;
+            color: #5e7e9c;
+            margin-bottom: 0.5rem;
+        }
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1f5e7e;
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem 0;
+            color: #1f2f3a;
+            border-left: 4px solid #2c7da0;
+            padding-left: 12px;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 1rem;
+            border: 1px solid #ecf3f8;
+            margin-bottom: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #ecf3f8;
+        }
+        th {
+            background: #f8fafc;
+            color: #2c4e6e;
+            font-weight: 600;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .badge-active { background: #e0f2e9; color: #1e7b48; }
+        .badge-disabled { background: #ffe6e3; color: #bc4e2c; }
+        .badge-pending { background: #fff0db; color: #c97e00; }
+        .badge-borrowed { background: #ffe6e3; color: #bc4e2c; }
+        .badge-repair { background: #ffefef; color: #bc4e2c; }
+        .badge-ok { background: #e0f2e9; color: #1e7b48; }
+        .btn-sm {
+            background: #eef2f7;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-sm.primary {
+            background: #2c7da0;
+            color: white;
+        }
+        .btn-sm.primary:hover { background: #1f6080; }
+        .btn-sm.danger { background: #fce4e4; color: #c23d3d; }
+        .btn-sm.danger:hover { background: #f5d0d0; }
+        .search-bar {
+            margin-bottom: 1.2rem;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .search-bar input, .search-bar select {
+            padding: 0.6rem 1rem;
+            border: 1px solid #cfdfe8;
+            border-radius: 2rem;
+            outline: none;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            max-width: 500px;
+            width: 90%;
+            border-radius: 2rem;
+            padding: 1.8rem;
+        }
+        .modal-content h3 { margin-bottom: 1rem; }
+        .modal-content input, .modal-content textarea, .modal-content select {
+            width: 100%;
+            padding: 0.7rem;
+            margin: 0.7rem 0;
+            border: 1px solid #cfdfe8;
+            border-radius: 1rem;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 1rem;
+        }
+        @media (max-width: 768px) {
+            .main-layout { flex-direction: column; }
+            .sidebar { width: 100%; display: flex; flex-wrap: wrap; border-right: none; border-bottom: 1px solid #ecf3f8; padding: 0.5rem; }
+            .nav-item { padding: 0.6rem 1rem; flex: 1 0 auto; justify-content: center; }
+            .content { padding: 1.2rem; }
+        }
+        .empty-row { text-align: center; color: #8ba0ae; padding: 2rem; }
+        footer {
+            background: #fefefe;
+            border-top: 1px solid #ecf3f8;
+            text-align: center;
+            padding: 0.8rem;
+            font-size: 0.7rem;
+            color: #7b8c9c;
+        }
+        .inline-flex { display: inline-flex; gap: 6px; }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="top-bar">
+        <div class="logo-area"><h2>LabEquip</h2><span>管理员端</span></div>
+        <div class="user-info"><span class="name" id="adminName">系统管理员</span><button class="logout-btn" id="logoutBtn">退出登录</button></div>
+    </div>
+    <div class="main-layout">
+        <div class="sidebar">
+            <div class="nav-item active" data-panel="dashboard"><i></i> 工作台</div>
+            <div class="nav-item" data-panel="users"><i></i> 用户管理</div>
+            <div class="nav-item" data-panel="devices"><i></i> 设备管理</div>
+            <div class="nav-item" data-panel="borrows"><i></i> 借用记录</div>
+            <div class="nav-item" data-panel="repairs"><i></i> 报修记录</div>
+            <div class="nav-item" data-panel="notices"><i></i> 公告管理</div>
+        </div>
+        <div class="content">
+            <!-- 仪表盘 -->
+            <div id="dashboardPanel" class="panel active-panel">
+                <div class="stats-grid">
+                    <div class="stat-card"><h3>用户总数</h3><div class="stat-number" id="totalUsers">0</div></div>
+                    <div class="stat-card"><h3>设备总数</h3><div class="stat-number" id="totalDevices">0</div></div>
+                    <div class="stat-card"><h3>借用中设备</h3><div class="stat-number" id="borrowingCount">0</div></div>
+                    <div class="stat-card"><h3>进行中报修</h3><div class="stat-number" id="pendingRepairCount">0</div></div>
+                </div>
+                <div class="section-title">最近借用申请</div>
+                <div class="table-wrapper"><table><thead><tr><th>申请人</th><th>设备</th><th>申请时间</th><th>状态</th><th>操作</th></tr></thead><tbody id="recentApplyBody"></tbody></table></div>
+                <div class="section-title">进行中报修工单</div>
+                <div class="table-wrapper"><table><thead><tr><th>设备</th><th>报修人</th><th>故障</th><th>状态</th></tr></thead><tbody id="activeRepairBody"></tbody></table></div>
+            </div>
+            <!-- 用户管理 -->
+            <div id="usersPanel" class="panel">
+                <div class="search-bar"><input type="text" id="userSearch" placeholder="用户名/真实姓名"><button class="btn-sm" id="searchUserBtn">搜索</button><button class="btn-sm primary" id="addUserBtn">新增用户</button></div>
+                <div class="table-wrapper"><table><thead><tr><th>用户名</th><th>真实姓名</th><th>手机号</th><th>角色</th><th>状态</th><th>操作</th></tr></thead><tbody id="userManageTbody"></tbody></table></div>
+            </div>
+            <!-- 设备管理 -->
+            <div id="devicesPanel" class="panel">
+                <div class="search-bar"><input type="text" id="deviceSearch" placeholder="设备名称/编号"><button class="btn-sm" id="searchDeviceBtn">搜索</button><button class="btn-sm primary" id="addDeviceBtn">新增设备</button></div>
+                <div class="table-wrapper"><table><thead><tr><th>编号</th><th>名称</th><th>分类</th><th>位置</th><th>状态</th><th>操作</th></tr></thead><tbody id="deviceManageTbody"></tbody></table></div>
+            </div>
+            <!-- 借用记录 -->
+            <div id="borrowsPanel" class="panel">
+                <div class="section-title">所有借用申请（含审批流）</div>
+                <div class="table-wrapper"><table><thead><tr><th>申请人</th><th>设备</th><th>申请时间</th><th>预计归还</th><th>状态</th><th>操作</th></tr></thead><tbody id="allApplyTbody"></tbody></table></div>
+                <div class="section-title">借用记录（已通过/历史）</div>
+                <div class="table-wrapper"><table><thead><tr><th>借用人</th><th>设备</th><th>借出时间</th><th>归还时间</th><th>状态</th><th>操作</th></tr></thead><tbody id="allRecordTbody"></tbody></table></div>
+            </div>
+            <!-- 报修记录 -->
+            <div id="repairsPanel" class="panel">
+                <div class="table-wrapper"><table><thead><tr><th>设备</th><th>报修人</th><th>故障</th><th>报修时间</th><th>维修状态</th><th>维修结果</th><th>操作</th></tr></thead><tbody id="repairManageTbody"></tbody></table></div>
+            </div>
+            <!-- 公告管理 -->
+            <div id="noticesPanel" class="panel">
+                <button class="btn-sm primary" id="publishNoticeBtn" style="margin-bottom:1rem;">发布公告</button>
+                <div id="noticeListPanel"></div>
+            </div>
+        </div>
+    </div>
+    <footer>管理员控制台 · 拥有一切管理权限</footer>
+</div>
+
+<!-- 用户模态框 -->
+<div id="userModal" class="modal"><div class="modal-content"><h3 id="userModalTitle">新增/编辑用户</h3><input type="text" id="userUsername" placeholder="用户名*"><input type="text" id="userRealName" placeholder="真实姓名*"><input type="tel" id="userPhone" placeholder="手机号"><select id="userRole"><option value="学生">学生</option><option value="实验员">实验员</option><option value="管理员">管理员</option></select><select id="userStatus"><option value="1">启用</option><option value="0">禁用</option></select><div class="modal-buttons"><button class="btn-sm" id="closeUserModal">取消</button><button class="btn-sm primary" id="saveUserBtn">保存</button></div></div></div>
+<!-- 设备模态框 -->
+<div id="deviceModal" class="modal"><div class="modal-content"><h3 id="deviceModalTitle">设备</h3><input type="text" id="deviceNo" placeholder="设备编号*"><input type="text" id="deviceName" placeholder="设备名称*"><input type="text" id="deviceCategory" placeholder="分类"><input type="text" id="deviceLocation" placeholder="存放位置"><select id="deviceStatusSelect"><option value="可借">可借</option><option value="已借出">已借出</option><option value="维修中">维修中</option><option value="报废">报废</option></select><div class="modal-buttons"><button class="btn-sm" id="closeDeviceModal">取消</button><button class="btn-sm primary" id="saveDeviceBtn">保存</button></div></div></div>
+<!-- 维修处理模态框 -->
+<div id="repairModal" class="modal"><div class="modal-content"><h3>处理报修工单</h3><select id="repairStatusSelect"><option value="待处理">待处理</option><option value="维修中">维修中</option><option value="已完成">已完成</option></select><textarea id="repairResultText" placeholder="维修结果"></textarea><div class="modal-buttons"><button class="btn-sm" id="closeRepairModalBtn">取消</button><button class="btn-sm primary" id="updateRepairBtn">更新</button></div></div></div>
+<!-- 公告模态框 -->
+<div id="noticeModal" class="modal"><div class="modal-content"><h3>发布公告</h3><input type="text" id="noticeTitle" placeholder="标题"><textarea id="noticeContent" rows="3" placeholder="内容"></textarea><div class="modal-buttons"><button class="btn-sm" id="closeNoticeModal">取消</button><button class="btn-sm primary" id="confirmNoticeBtn">发布</button></div></div></div>
+
+<script>
+    // ---------- 统一存储键名 (与登录页、实验员端完全兼容) ----------
+    const USERS_KEY = "lab_equipment_users";
+    const DEVICES_KEY = "lab_devices";
+    const APPLIES_KEY = "lab_borrow_applies";
+    const RECORDS_KEY = "lab_borrow_records";
+    const REPAIRS_KEY = "lab_repairs";
+    const NOTICES_KEY = "lab_notices";
+
+    // 初始化所有数据，确保默认数据存在且包含用户状态字段、设备等。
+    function initData() {
+        // 用户初始化（带status字段，默认1启用）
+        if (!localStorage.getItem(USERS_KEY)) {
+            const defaultUsers = [
+                { id: 1, username: "admin", password: "123456", realName: "系统管理员", phone: "13800000000", role: "管理员", roleCode: "ADMIN", status: 1 },
+                { id: 2, username: "lab", password: "123456", realName: "实验员", phone: "13800000001", role: "实验员", roleCode: "LAB_ADMIN", status: 1 },
+                { id: 3, username: "student", password: "123456", realName: "学生用户", phone: "13800000002", role: "学生", roleCode: "STUDENT", status: 1 }
+            ];
+            localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
+        } else {
+            // 确保老数据有status字段
+            let users = JSON.parse(localStorage.getItem(USERS_KEY));
+            let needUpdate = false;
+            users.forEach(u => { if (u.status === undefined) { u.status = 1; needUpdate = true; } });
+            if (needUpdate) localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        }
+        // 设备
+        if (!localStorage.getItem(DEVICES_KEY)) {
+            const defaultDevices = [
+                { id: 1, device_no: "DEV2026001", device_name: "数字示波器", category: "电子测量", location: "A101", status: "可借" },
+                { id: 2, device_no: "DEV2026002", device_name: "数字万用表", category: "电子测量", location: "A101", status: "可借" },
+                { id: 3, device_no: "DEV2026003", device_name: "实验室台式电脑", category: "计算机", location: "B203", status: "已借出" },
+                { id: 4, device_no: "DEV2026004", device_name: "电子天平", category: "化学", location: "C301", status: "维修中" },
+                { id: 5, device_no: "DEV2026005", device_name: "信号发生器", category: "电子测量", location: "A102", status: "可借" }
+            ];
+            localStorage.setItem(DEVICES_KEY, JSON.stringify(defaultDevices));
+        }
+        // 借用申请
+        if (!localStorage.getItem(APPLIES_KEY)) {
+            const defaultApplies = [
+                { id: 101, user_name: "张同学", device_id: 2, device_name: "数字万用表", reason: "课程实验", apply_time: "2026-05-04 09:30", expected_return: "2026-05-18", status: "待审批", user_id: 3 },
+                { id: 102, user_name: "李同学", device_id: 5, device_name: "信号发生器", reason: "竞赛", apply_time: "2026-05-05 10:15", expected_return: "2026-06-01", status: "待审批", user_id: 4 }
+            ];
+            localStorage.setItem(APPLIES_KEY, JSON.stringify(defaultApplies));
+        }
+        // 借用记录
+        if (!localStorage.getItem(RECORDS_KEY)) {
+            const defaultRecords = [
+                { id: 1, device_id: 3, device_name: "实验室台式电脑", user_name: "王同学", borrow_time: "2026-04-20 14:00", expected_return: "2026-05-10", return_time: null, status: "借用中" },
+                { id: 2, device_id: 1, device_name: "数字示波器", user_name: "赵同学", borrow_time: "2026-05-01 09:00", expected_return: "2026-05-15", return_time: "2026-05-04", status: "已归还" }
+            ];
+            localStorage.setItem(RECORDS_KEY, JSON.stringify(defaultRecords));
+        }
+        if (!localStorage.getItem(REPAIRS_KEY)) {
+            const defaultRepairs = [
+                { id: 1, device_id: 4, device_name: "电子天平", user_name: "孙老师", fault_desc: "无法校准", report_time: "2026-04-28", status: "维修中", result: "已联系厂家" }
+            ];
+            localStorage.setItem(REPAIRS_KEY, JSON.stringify(defaultRepairs));
+        }
+        if (!localStorage.getItem(NOTICES_KEY)) {
+            const defaultNotices = [
+                { id: 1, title: "五一假期实验室开放安排", content: "5月1日-5日正常开放，借用请提前申请。", publish_time: "2026-04-28", publisher: "管理员" }
+            ];
+            localStorage.setItem(NOTICES_KEY, JSON.stringify(defaultNotices));
+        }
+    }
+
+    // 辅助函数
+    function getUsers() { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
+    function saveUsers(users) { localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
+    function getDevices() { return JSON.parse(localStorage.getItem(DEVICES_KEY)) || []; }
+    function saveDevices(devices) { localStorage.setItem(DEVICES_KEY, JSON.stringify(devices)); }
+    function getApplies() { return JSON.parse(localStorage.getItem(APPLIES_KEY)) || []; }
+    function saveApplies(applies) { localStorage.setItem(APPLIES_KEY, JSON.stringify(applies)); }
+    function getRecords() { return JSON.parse(localStorage.getItem(RECORDS_KEY)) || []; }
+    function saveRecords(records) { localStorage.setItem(RECORDS_KEY, JSON.stringify(records)); }
+    function getRepairs() { return JSON.parse(localStorage.getItem(REPAIRS_KEY)) || []; }
+    function saveRepairs(repairs) { localStorage.setItem(REPAIRS_KEY, JSON.stringify(repairs)); }
+    function getNotices() { return JSON.parse(localStorage.getItem(NOTICES_KEY)) || []; }
+    function saveNotices(notices) { localStorage.setItem(NOTICES_KEY, JSON.stringify(notices)); }
+
+    // 全局刷新
+    function refreshAll() {
+        refreshDashboard();
+        refreshUserTable();
+        refreshDeviceTable();
+        refreshBorrowViews();
+        refreshRepairTable();
+        refreshNoticeList();
+    }
+    function refreshDashboard() {
+        const users = getUsers();
+        const devices = getDevices();
+        const records = getRecords();
+        const repairs = getRepairs();
+        document.getElementById("totalUsers").innerText = users.length;
+        document.getElementById("totalDevices").innerText = devices.length;
+        document.getElementById("borrowingCount").innerText = records.filter(r => r.status === "借用中").length;
+        document.getElementById("pendingRepairCount").innerText = repairs.filter(r => r.status !== "已完成").length;
+        const applies = getApplies().filter(a=>a.status==="待审批").slice(0,3);
+        const tbody = document.getElementById("recentApplyBody");
+        if(applies.length===0) tbody.innerHTML='<tr><td colspan="5" class="empty-row">暂无待批申请</td></tr>';
+        else tbody.innerHTML=applies.map(a=>`<tr><td>${a.user_name}</td><td>${a.device_name}</td><td>${a.apply_time}</td><td><span class="badge badge-pending">待审批</span></td><td><button class="btn-sm primary quick-approve" data-id="${a.id}">审批</button></td></tr>`).join('');
+        document.querySelectorAll('.quick-approve').forEach(btn=>btn.addEventListener('click',e=>{handleApprove(parseInt(btn.dataset.id),'approved');}));
+        const activeRepairs = getRepairs().filter(r=>r.status!=="已完成").slice(0,3);
+        const repairBody = document.getElementById("activeRepairBody");
+        if(activeRepairs.length===0) repairBody.innerHTML='<tr><td colspan="4" class="empty-row">暂无进行中报修</td></tr>';
+        else repairBody.innerHTML=activeRepairs.map(r=>`<tr><td>${r.device_name}</td><td>${r.user_name}</td><td>${r.fault_desc}</td><td><span class="badge badge-repair">${r.status}</span></td></tr>`).join('');
+    }
+    // 用户管理
+    function refreshUserTable(filter=""){
+        let users = getUsers();
+        if(filter) users = users.filter(u=>u.username.includes(filter)||u.realName.includes(filter));
+        const tbody = document.getElementById("userManageTbody");
+        if(users.length===0) tbody.innerHTML='<tr><td colspan="6" class="empty-row">暂无用户</td></tr>';
+        else tbody.innerHTML=users.map(u=>`<tr><td>${u.username}</td><td>${u.realName}</td><td>${u.phone||'-'}</td><td>${u.role}</td><td><span class="badge ${u.status===1?'badge-active':'badge-disabled'}">${u.status===1?'启用':'禁用'}</span></td><td><div class="inline-flex"><button class="btn-sm edit-user" data-id="${u.id}">编辑</button><button class="btn-sm danger reset-pwd" data-id="${u.id}">重置密码</button><button class="btn-sm danger toggle-status" data-id="${u.id}">${u.status===1?'禁用':'启用'}</button></div></td></tr>`).join('');
+        document.querySelectorAll('.edit-user').forEach(btn=>btn.addEventListener('click',()=>editUser(parseInt(btn.dataset.id))));
+        document.querySelectorAll('.reset-pwd').forEach(btn=>btn.addEventListener('click',()=>{let users=getUsers(); let u=users.find(u=>u.id===parseInt(btn.dataset.id)); if(u){u.password="123456"; saveUsers(users); alert(`用户 ${u.username} 密码已重置为123456`); refreshUserTable();}}));
+        document.querySelectorAll('.toggle-status').forEach(btn=>btn.addEventListener('click',()=>{let users=getUsers(); let u=users.find(u=>u.id===parseInt(btn.dataset.id)); if(u){u.status=u.status===1?0:1; saveUsers(users); refreshUserTable(); alert(`用户状态已变更`);}}));
+    }
+    let editingUserId = null;
+    function editUser(id){
+        const user = getUsers().find(u=>u.id===id);
+        if(user){
+            editingUserId = id;
+            document.getElementById("userModalTitle").innerText = "编辑用户";
+            document.getElementById("userUsername").value = user.username;
+            document.getElementById("userRealName").value = user.realName;
+            document.getElementById("userPhone").value = user.phone||'';
+            document.getElementById("userRole").value = user.role;
+            document.getElementById("userStatus").value = user.status;
+            document.getElementById("userModal").style.display = "flex";
+        }
+    }
+    function saveUserFromModal(){
+        const username = document.getElementById("userUsername").value.trim();
+        const realName = document.getElementById("userRealName").value.trim();
+        if(!username||!realName){alert("用户名和真实姓名不能为空");return;}
+        let users = getUsers();
+        if(editingUserId){
+            const idx = users.findIndex(u=>u.id===editingUserId);
+            if(idx!==-1){
+                users[idx].username = username;
+                users[idx].realName = realName;
+                users[idx].phone = document.getElementById("userPhone").value;
+                users[idx].role = document.getElementById("userRole").value;
+                users[idx].status = parseInt(document.getElementById("userStatus").value);
+                users[idx].roleCode = users[idx].role==="学生"?"STUDENT":(users[idx].role==="实验员"?"LAB_ADMIN":"ADMIN");
+                saveUsers(users);
+            }
+            editingUserId = null;
+        } else {
+            if(users.some(u=>u.username===username)){alert("用户名已存在");return;}
+            const newId = Math.max(...users.map(u=>u.id),0)+1;
+            const newUser = {
+                id: newId, username, password: "123456", realName, phone: document.getElementById("userPhone").value,
+                role: document.getElementById("userRole").value, roleCode: document.getElementById("userRole").value==="学生"?"STUDENT":(document.getElementById("userRole").value==="实验员"?"LAB_ADMIN":"ADMIN"),
+                status: parseInt(document.getElementById("userStatus").value)
+            };
+            users.push(newUser);
+            saveUsers(users);
+        }
+        document.getElementById("userModal").style.display = "none";
+        refreshUserTable();
+        refreshDashboard();
+    }
+    // 设备管理
+    let editingDeviceId = null;
+    function refreshDeviceTable(filter=""){
+        let devices = getDevices();
+        if(filter) devices = devices.filter(d=>d.device_name.includes(filter)||d.device_no.includes(filter));
+        const tbody = document.getElementById("deviceManageTbody");
+        if(devices.length===0) tbody.innerHTML='<tr><td colspan="6" class="empty-row">暂无设备</td></tr>';
+        else tbody.innerHTML=devices.map(d=>`<tr><td>${d.device_no}</td><td>${d.device_name}</td><td>${d.category||'-'}</td><td>${d.location||'-'}</td><td><span class="badge ${d.status==='可借'?'badge-ok':(d.status==='已借出'?'badge-borrowed':'badge-repair')}">${d.status}</span></td><td><button class="btn-sm edit-device" data-id="${d.id}">编辑</button><button class="btn-sm danger delete-device" data-id="${d.id}">删除</button></td></tr>`).join('');
+        attachDeviceEvents();
+    }
+    function attachDeviceEvents(){
+        document.querySelectorAll('.edit-device').forEach(btn=>btn.addEventListener('click',()=>editDevice(parseInt(btn.dataset.id))));
+        document.querySelectorAll('.delete-device').forEach(btn=>btn.addEventListener('click',()=>{if(confirm("删除设备不可恢复")){let devices=getDevices(); devices=devices.filter(d=>d.id!==parseInt(btn.dataset.id)); saveDevices(devices); refreshDeviceTable(); refreshDashboard();}}));
+    }
+    function editDevice(id){
+        const device = getDevices().find(d=>d.id===id);
+        if(device){
+            editingDeviceId = id;
+            document.getElementById("deviceModalTitle").innerText = "编辑设备";
+            document.getElementById("deviceNo").value = device.device_no;
+            document.getElementById("deviceName").value = device.device_name;
+            document.getElementById("deviceCategory").value = device.category||'';
+            document.getElementById("deviceLocation").value = device.location||'';
+            document.getElementById("deviceStatusSelect").value = device.status;
+            document.getElementById("deviceModal").style.display = "flex";
+        }
+    }
+    function saveDeviceFromModal(){
+        const no = document.getElementById("deviceNo").value.trim();
+        const name = document.getElementById("deviceName").value.trim();
+        if(!no||!name){alert("编号和名称不能为空");return;}
+        let devices = getDevices();
+        if(editingDeviceId){
+            const idx = devices.findIndex(d=>d.id===editingDeviceId);
+            if(idx!==-1){
+                devices[idx].device_no = no; devices[idx].device_name = name; devices[idx].category = document.getElementById("deviceCategory").value;
+                devices[idx].location = document.getElementById("deviceLocation").value; devices[idx].status = document.getElementById("deviceStatusSelect").value;
+                saveDevices(devices);
+            }
+            editingDeviceId = null;
+        } else {
+            const newId = Math.max(...devices.map(d=>d.id),0)+1;
+            devices.push({ id: newId, device_no: no, device_name: name, category: document.getElementById("deviceCategory").value, location: document.getElementById("deviceLocation").value, status: document.getElementById("deviceStatusSelect").value });
+            saveDevices(devices);
+        }
+        document.getElementById("deviceModal").style.display = "none";
+        refreshDeviceTable();
+        refreshDashboard();
+    }
+    // 借用记录视图
+    function refreshBorrowViews(){
+        const applies = getApplies();
+        const tbodyApply = document.getElementById("allApplyTbody");
+        if(applies.length===0) tbodyApply.innerHTML='<tr><td colspan="6" class="empty-row">无借用申请</td></tr>';
+        else tbodyApply.innerHTML=applies.map(a=>`<tr><td>${a.user_name}</td><td>${a.device_name}</td><td>${a.apply_time}</td><td>${a.expected_return}</td><td>${a.status==='待审批'?'<span class="badge badge-pending">待审批</span>':(a.status==='approved'?'已通过':'已拒绝')}</td><td>${a.status==='待审批'?`<button class="btn-sm primary approve-apply" data-id="${a.id}">通过</button><button class="btn-sm danger reject-apply" data-id="${a.id}">拒绝</button>`:'-'}</td></tr>`).join('');
+        document.querySelectorAll('.approve-apply').forEach(btn=>btn.addEventListener('click',()=>handleApprove(parseInt(btn.dataset.id),'approved')));
+        document.querySelectorAll('.reject-apply').forEach(btn=>btn.addEventListener('click',()=>handleApprove(parseInt(btn.dataset.id),'rejected')));
+        const records = getRecords();
+        const tbodyRecord = document.getElementById("allRecordTbody");
+        if(records.length===0) tbodyRecord.innerHTML='<tr><td colspan="6" class="empty-row">无借用记录</td></tr>';
+        else tbodyRecord.innerHTML=records.map(r=>`<tr><td>${r.user_name}</td><td>${r.device_name}</td><td>${r.borrow_time||'-'}</td><td>${r.return_time||'-'}</td><td>${r.status==='借用中'?'<span class="badge badge-borrowed">借用中</span>':'已归还'}</td><td>${r.status==='借用中'?`<button class="btn-sm primary force-return" data-id="${r.id}">强制归还</button>`:'-'}</td></tr>`).join('');
+        document.querySelectorAll('.force-return').forEach(btn=>btn.addEventListener('click',()=>{ let recId=parseInt(btn.dataset.id); let records=getRecords(); let rec=records.find(r=>r.id===recId); if(rec&&rec.status==='借用中'){ rec.return_time=new Date().toLocaleString(); rec.status="已归还"; saveRecords(records); let devices=getDevices(); let dev=devices.find(d=>d.id===rec.device_id); if(dev&&dev.status==='已借出') dev.status="可借"; saveDevices(devices); refreshAll(); alert("已强制归还"); } }));
+    }
+    function handleApprove(applyId,action){
+        let applies = getApplies();
+        const apply = applies.find(a=>a.id===applyId);
+        if(!apply) return;
+        if(action==='approved'){
+            let devices = getDevices();
+            const device = devices.find(d=>d.id===apply.device_id);
+            if(device && device.status!=="可借"){ alert("设备当前不可借用"); return; }
+            if(device) { device.status = "已借出"; saveDevices(devices); }
+            const records = getRecords();
+            const newRecord = { id: Date.now(), device_id: apply.device_id, device_name: apply.device_name, user_name: apply.user_name, borrow_time: new Date().toLocaleString(), expected_return: apply.expected_return, return_time: null, status: "借用中" };
+            records.push(newRecord);
+            saveRecords(records);
+            const newApplies = applies.filter(a=>a.id!==applyId);
+            saveApplies(newApplies);
+            alert(`已通过 ${apply.device_name} 的借用申请`);
+        } else {
+            const newApplies = applies.filter(a=>a.id!==applyId);
+            saveApplies(newApplies);
+            alert(`已拒绝借用申请`);
+        }
+        refreshAll();
+    }
+    function refreshRepairTable(){
+        let repairs = getRepairs();
+        const tbody = document.getElementById("repairManageTbody");
+        if(repairs.length===0) tbody.innerHTML='<tr><td colspan="7" class="empty-row">暂无报修</td></tr>';
+        else tbody.innerHTML=repairs.map(r=>`<tr><td>${r.device_name}</td><td>${r.user_name}</td><td>${r.fault_desc}</td><td>${r.report_time}</td><td><span class="badge badge-repair">${r.status}</span></td><td>${r.result||'-'}</td><td><button class="btn-sm primary process-repair" data-id="${r.id}">处理</button></td></tr>`).join('');
+        document.querySelectorAll('.process-repair').forEach(btn=>btn.addEventListener('click',()=>openRepairProcess(parseInt(btn.dataset.id))));
+    }
+    let currentRepairId = null;
+    function openRepairProcess(id){
+        currentRepairId = id;
+        const repair = getRepairs().find(r=>r.id===id);
+        if(repair){
+            document.getElementById("repairStatusSelect").value = repair.status;
+            document.getElementById("repairResultText").value = repair.result||'';
+            document.getElementById("repairModal").style.display = "flex";
+        }
+    }
+    function updateRepair(){
+        if(!currentRepairId) return;
+        let repairs = getRepairs();
+        const idx = repairs.findIndex(r=>r.id===currentRepairId);
+        if(idx!==-1){
+            repairs[idx].status = document.getElementById("repairStatusSelect").value;
+            repairs[idx].result = document.getElementById("repairResultText").value;
+            if(repairs[idx].status === "已完成"){
+                let devices = getDevices();
+                const device = devices.find(d=>d.id===repairs[idx].device_id);
+                if(device && device.status === "维修中") device.status = "可借";
+                saveDevices(devices);
+            }
+            saveRepairs(repairs);
+            alert("报修状态已更新");
+        }
+        document.getElementById("repairModal").style.display = "none";
+        refreshAll();
+    }
+    function refreshNoticeList(){
+        const notices = getNotices();
+        const container = document.getElementById("noticeListPanel");
+        if(notices.length===0) container.innerHTML='<div class="empty-row">暂无公告</div>';
+        else container.innerHTML=notices.map(n=>`<div style="background:#f9fbfd; border-radius:1rem; padding:1rem; margin-bottom:0.8rem; border-left:3px solid #2c7da0;"><div><strong>${n.title}</strong> <span style="font-size:0.7rem; color:#7b8c9c;">${n.publish_time} by ${n.publisher}</span></div><div>${n.content}</div><div style="margin-top:8px;"><button class="btn-sm danger delete-notice" data-id="${n.id}">删除</button></div></div>`).join('');
+        document.querySelectorAll('.delete-notice').forEach(btn=>btn.addEventListener('click',()=>{ let notices=getNotices(); notices=notices.filter(n=>n.id!==parseInt(btn.dataset.id)); saveNotices(notices); refreshNoticeList(); }));
+    }
+    function publishNotice(title,content){
+        if(!title||!content) return;
+        const notices = getNotices();
+        const newNotice = { id: Date.now(), title, content, publish_time: new Date().toLocaleString(), publisher: "管理员" };
+        notices.unshift(newNotice);
+        saveNotices(notices);
+        refreshNoticeList();
+        alert("公告发布成功");
+    }
+
+    // 模态框事件
+    document.getElementById("closeUserModal").addEventListener('click',()=>document.getElementById("userModal").style.display="none");
+    document.getElementById("saveUserBtn").addEventListener('click',saveUserFromModal);
+    document.getElementById("addUserBtn").addEventListener('click',()=>{ editingUserId=null; document.getElementById("userModalTitle").innerText="新增用户"; document.getElementById("userUsername").value=""; document.getElementById("userRealName").value=""; document.getElementById("userPhone").value=""; document.getElementById("userRole").value="学生"; document.getElementById("userStatus").value="1"; document.getElementById("userModal").style.display="flex"; });
+    document.getElementById("closeDeviceModal").addEventListener('click',()=>document.getElementById("deviceModal").style.display="none");
+    document.getElementById("saveDeviceBtn").addEventListener('click',saveDeviceFromModal);
+    document.getElementById("addDeviceBtn").addEventListener('click',()=>{ editingDeviceId=null; document.getElementById("deviceModalTitle").innerText="新增设备"; document.getElementById("deviceNo").value=""; document.getElementById("deviceName").value=""; document.getElementById("deviceCategory").value=""; document.getElementById("deviceLocation").value=""; document.getElementById("deviceStatusSelect").value="可借"; document.getElementById("deviceModal").style.display="flex"; });
+    document.getElementById("closeRepairModalBtn").addEventListener('click',()=>document.getElementById("repairModal").style.display="none");
+    document.getElementById("updateRepairBtn").addEventListener('click',updateRepair);
+    document.getElementById("publishNoticeBtn").addEventListener('click',()=>document.getElementById("noticeModal").style.display="flex");
+    document.getElementById("closeNoticeModal").addEventListener('click',()=>document.getElementById("noticeModal").style.display="none");
+    document.getElementById("confirmNoticeBtn").addEventListener('click',()=>{ let title=document.getElementById("noticeTitle").value.trim(); let content=document.getElementById("noticeContent").value.trim(); publishNotice(title,content); document.getElementById("noticeModal").style.display="none"; document.getElementById("noticeTitle").value=""; document.getElementById("noticeContent").value=""; });
+    document.getElementById("searchUserBtn").addEventListener('click',()=>refreshUserTable(document.getElementById("userSearch").value));
+    document.getElementById("searchDeviceBtn").addEventListener('click',()=>refreshDeviceTable(document.getElementById("deviceSearch").value));
+
+    function initNav(){
+        const navs = document.querySelectorAll('.nav-item');
+        const panels = ['dashboardPanel','usersPanel','devicesPanel','borrowsPanel','repairsPanel','noticesPanel'];
+        navs.forEach(nav=>{nav.addEventListener('click',()=>{ const panel=nav.dataset.panel; navs.forEach(n=>n.classList.remove('active')); nav.classList.add('active'); panels.forEach(p=>document.getElementById(p).classList.remove('active-panel')); if(panel==='dashboard') document.getElementById('dashboardPanel').classList.add('active-panel'); if(panel==='users') document.getElementById('usersPanel').classList.add('active-panel'); if(panel==='devices') document.getElementById('devicesPanel').classList.add('active-panel'); if(panel==='borrows') document.getElementById('borrowsPanel').classList.add('active-panel'); if(panel==='repairs') document.getElementById('repairsPanel').classList.add('active-panel'); if(panel==='notices') document.getElementById('noticesPanel').classList.add('active-panel'); if(panel==='users') refreshUserTable(); if(panel==='devices') refreshDeviceTable(); if(panel==='borrows') refreshBorrowViews(); if(panel==='repairs') refreshRepairTable(); if(panel==='notices') refreshNoticeList(); });});
+    }
+    document.getElementById("logoutBtn").addEventListener('click',()=>{ sessionStorage.clear(); alert("已退出登录"); window.location.href="login.html"; });
+    initData(); refreshAll(); initNav();
+    // 设置管理员名称
+    const adminUser = getUsers().find(u=>u.username==='admin');
+    if(adminUser) document.getElementById("adminName").innerText = adminUser.realName;
+</script>
+</body>
+</html>
