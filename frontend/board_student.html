@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>学生控制面板 | 实验室设备管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e9f0f5 0%, #d4e3ed 100%);
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+
+        /* 主容器 - 类仪表盘布局 */
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.96);
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            backdrop-filter: blur(0px);
+            transition: all 0.2s;
+        }
+
+        /* 顶部栏 */
+        .top-bar {
+            background: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ecf3f8;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-area h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f5e7e;
+        }
+        .logo-area span {
+            background: #2c7da0;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: #f8fafc;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+        }
+        .user-info .name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .user-info .role {
+            background: #2c7da0;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+        }
+        .logout-btn {
+            background: none;
+            border: 1px solid #cfdfe8;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            color: #5c6f82;
+            transition: 0.2s;
+        }
+        .logout-btn:hover {
+            background: #eef2f5;
+            border-color: #2c7da0;
+        }
+
+        /* 主体 flex 布局 */
+        .main-layout {
+            display: flex;
+            min-height: 600px;
+        }
+
+        /* 侧边栏导航 */
+        .sidebar {
+            width: 260px;
+            background: #fefefe;
+            border-right: 1px solid #ecf3f8;
+            padding: 1.5rem 0;
+            flex-shrink: 0;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.9rem 1.8rem;
+            margin: 0.3rem 0;
+            color: #4a627a;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+        .nav-item i { 
+            width: 24px;
+            font-style: normal;
+            font-weight: normal;
+            display: inline-block;
+            text-align: center;
+        }
+        .nav-item.active {
+            background: #eef5f9;
+            color: #2c7da0;
+            border-left-color: #2c7da0;
+            font-weight: 600;
+        }
+        .nav-item:hover:not(.active) {
+            background: #f1f6fa;
+            color: #1f5e7e;
+        }
+
+        /* 右侧内容区 */
+        .content {
+            flex: 1;
+            background: #ffffff;
+            padding: 1.8rem 2rem;
+            overflow-x: auto;
+        }
+        .panel {
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+        .panel.active-panel {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        /* 卡片样式 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: #f9fbfd;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            border: 1px solid #e5eef4;
+            transition: 0.2s;
+        }
+        .stat-card h3 {
+            font-size: 0.85rem;
+            color: #5e7e9c;
+            margin-bottom: 0.5rem;
+        }
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1f5e7e;
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem 0;
+            color: #1f2f3a;
+            border-left: 4px solid #2c7da0;
+            padding-left: 12px;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 1rem;
+            border: 1px solid #ecf3f8;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #ecf3f8;
+        }
+        th {
+            background: #f8fafc;
+            color: #2c4e6e;
+            font-weight: 600;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .badge-available { background: #e0f2e9; color: #1e7b48; }
+        .badge-borrowed { background: #ffe6e3; color: #bc4e2c; }
+        .badge-repair { background: #fff0db; color: #c97e00; }
+        .badge-pending { background: #eef1fa; color: #3b6e9e; }
+        .badge-approved { background: #dff0fa; color: #1f6392; }
+        .badge-returned { background: #e3f0e8; color: #2e7d64; }
+        .btn-sm {
+            background: #eef2f7;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-sm.primary {
+            background: #2c7da0;
+            color: white;
+        }
+        .btn-sm.primary:hover {
+            background: #1f6080;
+        }
+        .search-bar {
+            margin-bottom: 1.2rem;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            border: 1px solid #cfdfe8;
+            border-radius: 2rem;
+            outline: none;
+        }
+        .search-bar input:focus {
+            border-color: #2c7da0;
+        }
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            max-width: 450px;
+            width: 90%;
+            border-radius: 2rem;
+            padding: 1.8rem;
+            box-shadow: 0 20px 30px -10px rgba(0,0,0,0.2);
+        }
+        .modal-content h3 {
+            margin-bottom: 1rem;
+        }
+        .modal-content input, .modal-content textarea, .modal-content select {
+            width: 100%;
+            padding: 0.7rem;
+            margin: 0.7rem 0;
+            border: 1px solid #cfdfe8;
+            border-radius: 1rem;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 1rem;
+        }
+        @media (max-width: 768px) {
+            .main-layout {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                display: flex;
+                flex-wrap: wrap;
+                border-right: none;
+                border-bottom: 1px solid #ecf3f8;
+                padding: 0.5rem;
+            }
+            .nav-item {
+                padding: 0.6rem 1rem;
+                flex: 1 0 auto;
+                justify-content: center;
+            }
+            .content {
+                padding: 1.2rem;
+            }
+        }
+        .empty-row {
+            text-align: center;
+            color: #8ba0ae;
+            padding: 2rem;
+        }
+        footer {
+            background: #fefefe;
+            border-top: 1px solid #ecf3f8;
+            text-align: center;
+            padding: 0.8rem;
+            font-size: 0.7rem;
+            color: #7b8c9c;
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="top-bar">
+        <div class="logo-area">
+            <h2>LabEquip</h2>
+            <span>学生端</span>
+        </div>
+        <div class="user-info">
+            <span class="name" id="studentName">学生用户</span>
+            <span class="role">学生</span>
+            <button class="logout-btn" id="logoutBtn">退出登录</button>
+        </div>
+    </div>
+    <div class="main-layout">
+        <div class="sidebar">
+            <div class="nav-item active" data-panel="dashboard">
+                <i></i> 仪表盘
+            </div>
+            <div class="nav-item" data-panel="devices">
+                <i></i> 设备中心
+            </div>
+            <div class="nav-item" data-panel="myborrow">
+                <i></i> 我的借用
+            </div>
+            <div class="nav-item" data-panel="repairs">
+                <i></i> 报修记录
+            </div>
+            <div class="nav-item" data-panel="notices">
+                <i></i> 公告通知
+            </div>
+        </div>
+        <div class="content">
+            <!-- 仪表盘面板 -->
+            <div id="dashboardPanel" class="panel active-panel">
+                <div class="stats-grid">
+                    <div class="stat-card"><h3>借用中设备</h3><div class="stat-number" id="borrowingCount">0</div></div>
+                    <div class="stat-card"><h3>已归还设备</h3><div class="stat-number" id="returnedCount">0</div></div>
+                    <div class="stat-card"><h3>待处理报修</h3><div class="stat-number" id="pendingRepairCount">0</div></div>
+                    <div class="stat-card"><h3>最新公告</h3><div class="stat-number" id="noticeCount">0</div></div>
+                </div>
+                <div class="section-title">最近借用动态</div>
+                <div class="table-wrapper">
+                    <table id="recentBorrowTable">
+                        <thead><tr><th>设备名称</th><th>借用时间</th><th>状态</th></tr></thead>
+                        <tbody><tr><td colspan="3" class="empty-row">暂无记录</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="section-title">报修提醒</div>
+                <div class="table-wrapper">
+                    <table id="recentRepairTable">
+                        <thead><tr><th>设备名称</th><th>故障描述</th><th>状态</th></tr></thead>
+                        <tbody><tr><td colspan="3" class="empty-row">暂无报修</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 设备中心面板 -->
+            <div id="devicesPanel" class="panel">
+                <div class="search-bar">
+                    <input type="text" id="deviceSearch" placeholder="按设备名称或编号搜索...">
+                    <button class="btn-sm" id="searchDeviceBtn">🔍 搜索</button>
+                </div>
+                <div class="table-wrapper">
+                    <table id="deviceListTable">
+                        <thead><tr><th>设备编号</th><th>设备名称</th><th>分类</th><th>存放位置</th><th>状态</th><th>操作</th></tr></thead>
+                        <tbody id="deviceTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 我的借用面板 -->
+            <div id="myborrowPanel" class="panel">
+                <div class="section-title">借用/申请记录</div>
+                <div class="table-wrapper">
+                    <table id="borrowRecordTable">
+                        <thead><tr><th>设备名称</th><th>借用时间/申请时间</th><th>预计归还</th><th>状态</th><th>操作</th></tr></thead>
+                        <tbody id="borrowTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 报修记录面板 -->
+            <div id="repairsPanel" class="panel">
+                <button class="btn-sm primary" id="newRepairBtn" style="margin-bottom: 1rem;">新增报修</button>
+                <div class="table-wrapper">
+                    <table id="repairListTable">
+                        <thead><tr><th>设备名称</th><th>故障描述</th><th>报修时间</th><th>维修状态</th><th>结果</th></tr></thead>
+                        <tbody id="repairTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 公告面板 -->
+            <div id="noticesPanel" class="panel">
+                <div class="section-title">最新公告</div>
+                <div id="noticeList" style="display: flex; flex-direction: column; gap: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+    <footer>实验室设备管理系统 · 学生端控制面板 (模拟数据体验)</footer>
+</div>
+
+<!-- 借用申请模态框 -->
+<div id="borrowModal" class="modal">
+    <div class="modal-content">
+        <h3>申请借用设备</h3>
+        <input type="text" id="borrowDeviceId" readonly style="background:#f5f7f9;">
+        <input type="text" id="borrowDeviceName" readonly style="background:#f5f7f9;">
+        <textarea id="borrowReason" placeholder="借用原因" rows="2"></textarea>
+        <input type="datetime-local" id="expectedReturnTime">
+        <div class="modal-buttons">
+            <button class="btn-sm" id="closeModalBtn">取消</button>
+            <button class="btn-sm primary" id="confirmBorrowBtn">提交申请</button>
+        </div>
+    </div>
+</div>
+
+<!-- 新增报修模态框 -->
+<div id="repairModal" class="modal">
+    <div class="modal-content">
+        <h3>设备报修</h3>
+        <select id="repairDeviceSelect"></select>
+        <textarea id="faultDesc" placeholder="详细描述故障" rows="3"></textarea>
+        <div class="modal-buttons">
+            <button class="btn-sm" id="closeRepairModalBtn">取消</button>
+            <button class="btn-sm primary" id="confirmRepairBtn">提交报修</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- 模拟全局数据 (基于前端存储，页面刷新重置为初始演示数据) ----------
+    let currentStudent = { id: 3, username: "student", realName: "学生用户", role: "学生", phone: "13800000002" };
+
+    // 设备库
+    let devices = [
+        { id: 1, device_no: "DEV2026001", device_name: "数字示波器", category: "电子测量设备", location: "A101实验室", status: "可借", statusCode: 1 },
+        { id: 2, device_no: "DEV2026002", device_name: "数字万用表", category: "电子测量设备", location: "A101实验室", status: "可借", statusCode: 1 },
+        { id: 3, device_no: "DEV2026003", device_name: "实验室台式电脑", category: "计算机设备", location: "B203实验室", status: "已借出", statusCode: 2 },
+        { id: 4, device_no: "DEV2026004", device_name: "电子天平", category: "化学实验设备", location: "C301实验室", status: "维修中", statusCode: 3 },
+        { id: 5, device_no: "DEV2026005", device_name: "信号发生器", category: "电子测量设备", location: "A102实验室", status: "可借", statusCode: 1 }
+    ];
+
+    // 借用记录 (包含申请和已通过借用的)
+    let borrowRecords = [
+        { id: 1, device_id: 3, device_name: "实验室台式电脑", apply_time: "2026-04-20 10:00", expected_return: "2026-05-10", actual_return: null, status: "借用中", statusType: "borrowed" },
+        { id: 2, device_id: 2, device_name: "数字万用表", apply_time: "2026-04-25 14:30", expected_return: "2026-05-05", actual_return: "2026-05-03", status: "已归还", statusType: "returned" },
+        { id: 3, device_id: 5, device_name: "信号发生器", apply_time: "2026-05-01 09:15", expected_return: "2026-05-20", actual_return: null, status: "待审批", statusType: "pending" }
+    ];
+
+    // 报修记录
+    let repairs = [
+        { id: 1, device_id: 4, device_name: "电子天平", fault_desc: "显示屏不亮", report_time: "2026-04-18 15:20", status: "维修中", result: "已安排维修" }
+    ];
+
+    // 公告
+    let notices = [
+        { id: 1, title: "五一假期实验室开放安排", content: "5月1日-5月5日实验室正常开放，设备借用需提前申请。", publish_time: "2026-04-28" },
+        { id: 2, title: "新设备已入库", content: "新增20套单片机开发板，欢迎同学们借用学习。", publish_time: "2026-04-25" },
+        { id: 3, title: "设备维护提醒", content: "示波器固件升级已完成，借用时注意规范操作。", publish_time: "2026-04-20" }
+    ];
+
+    // 辅助函数 
+    function getBadge(status) {
+        if(status === "可借") return '<span class="badge badge-available">可借</span>';
+        if(status === "已借出") return '<span class="badge badge-borrowed">已借出</span>';
+        if(status === "维修中") return '<span class="badge badge-repair">维修中</span>';
+        if(status === "待审批") return '<span class="badge badge-pending">待审批</span>';
+        if(status === "借用中") return '<span class="badge badge-approved">借用中</span>';
+        if(status === "已归还") return '<span class="badge badge-returned">已归还</span>';
+        return status;
+    }
+
+    // 更新仪表盘统计数据
+    function updateDashboardStats() {
+        const borrowing = borrowRecords.filter(r => r.status === "借用中").length;
+        const returned = borrowRecords.filter(r => r.status === "已归还").length;
+        const pendingRepair = repairs.filter(r => r.status !== "已完成").length;
+        document.getElementById("borrowingCount").innerText = borrowing;
+        document.getElementById("returnedCount").innerText = returned;
+        document.getElementById("pendingRepairCount").innerText = pendingRepair;
+        document.getElementById("noticeCount").innerText = notices.length;
+
+        // 最近借用动态 (最多3条)
+        const recent = [...borrowRecords].sort((a,b)=> new Date(b.apply_time) - new Date(a.apply_time)).slice(0,3);
+        const tbody = document.querySelector("#recentBorrowTable tbody");
+        if(recent.length === 0) tbody.innerHTML = '<tr><td colspan="3" class="empty-row">暂无记录</td></tr>';
+        else {
+            tbody.innerHTML = recent.map(r => `<tr><td>${r.device_name}</td><td>${r.apply_time}</td><td>${getBadge(r.status)}</td></tr>`).join('');
+        }
+        // 报修提醒
+        const recentRepair = repairs.slice(0,3);
+        const repairTbody = document.querySelector("#recentRepairTable tbody");
+        if(recentRepair.length === 0) repairTbody.innerHTML = '<tr><td colspan="3" class="empty-row">暂无报修</td></tr>';
+        else {
+            repairTbody.innerHTML = recentRepair.map(r => `<tr><td>${r.device_name}</td><td>${r.fault_desc}</td><td>${getBadge(r.status === "维修中" ? "维修中" : (r.status==="已完成"?"已完成":"待处理"))}</td></tr>`).join('');
+        }
+    }
+
+    // 渲染设备列表
+    function renderDeviceList(filterText = "") {
+        let filtered = devices.filter(d => d.device_name.includes(filterText) || d.device_no.includes(filterText));
+        const tbody = document.getElementById("deviceTableBody");
+        if(filtered.length === 0) tbody.innerHTML = '<tr><td colspan="6" class="empty-row">暂无设备</td></tr>';
+        else {
+            tbody.innerHTML = filtered.map(dev => `
+                <tr>
+                    <td>${dev.device_no}</td><td>${dev.device_name}</td><td>${dev.category}</td><td>${dev.location}</td>
+                    <td>${getBadge(dev.status)}</td>
+                    <td>${dev.status === "可借" ? `<button class="btn-sm primary borrow-action" data-id="${dev.id}" data-name="${dev.device_name}">申请借用</button>` : '<span style="color:#8ba0ae;">不可借</span>'}</td>
+                </tr>
+            `).join('');
+            // 绑定借用按钮事件
+            document.querySelectorAll('.borrow-action').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(btn.dataset.id);
+                    const name = btn.dataset.name;
+                    openBorrowModal(id, name);
+                });
+            });
+        }
+    }
+
+    // 渲染我的借用记录
+    function renderBorrowRecords() {
+        const tbody = document.getElementById("borrowTableBody");
+        if(borrowRecords.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="empty-row">暂无借用记录</td></tr>';
+        else {
+            tbody.innerHTML = borrowRecords.map(rec => `
+                <tr>
+                    <td>${rec.device_name}</td>
+                    <td>${rec.apply_time}</td><td>${rec.expected_return}</td>
+                    <td>${getBadge(rec.status)}</td>
+                    <td>${rec.status === "待审批" ? `<button class="btn-sm cancel-borrow" data-id="${rec.id}">取消申请</button>` : (rec.status === "借用中" ? `<button class="btn-sm return-device" data-id="${rec.id}" data-name="${rec.device_name}">提醒归还</button>` : '-')}</td>
+                </tr>
+            `).join('');
+            // 取消申请逻辑
+            document.querySelectorAll('.cancel-borrow').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(btn.dataset.id);
+                    borrowRecords = borrowRecords.filter(r => r.id !== id);
+                    renderBorrowRecords();
+                    updateDashboardStats();
+                    alert("已取消借用申请。");
+                });
+            });
+            document.querySelectorAll('.return-device').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    alert("归还操作请联系实验员办理，此为学生端演示提醒。");
+                });
+            });
+        }
+    }
+
+    // 渲染报修记录
+    function renderRepairs() {
+        const tbody = document.getElementById("repairTableBody");
+        if(repairs.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="empty-row">暂无报修记录</td></tr>';
+        else {
+            tbody.innerHTML = repairs.map(r => `
+                <tr>
+                    <td>${r.device_name}</td><td>${r.fault_desc}</td><td>${r.report_time}</td>
+                    <td>${getBadge(r.status === "维修中" ? "维修中" : (r.status==="已完成"? "已完成":"待处理"))}</td>
+                    <td>${r.result || '-'}</td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    // 渲染公告
+    function renderNotices() {
+        const container = document.getElementById("noticeList");
+        if(notices.length === 0) container.innerHTML = '<div class="empty-row">暂无公告</div>';
+        else {
+            container.innerHTML = notices.map(n => `
+                <div style="background:#f9fbfd; border-radius:1.2rem; padding:1rem; border-left:5px solid #2c7da0;">
+                    <div style="display:flex; justify-content:space-between;"><strong>${n.title}</strong><span style="font-size:0.7rem; color:#7b8c9c;">${n.publish_time}</span></div>
+                    <div style="margin-top:8px; font-size:0.9rem;">${n.content}</div>
+                </div>
+            `).join('');
+        }
+    }
+
+    // 借用弹窗
+    let currentDeviceId = null;
+    function openBorrowModal(deviceId, deviceName) {
+        currentDeviceId = deviceId;
+        document.getElementById("borrowDeviceId").value = deviceId;
+        document.getElementById("borrowDeviceName").value = deviceName;
+        document.getElementById("borrowReason").value = "";
+        document.getElementById("expectedReturnTime").value = "";
+        document.getElementById("borrowModal").style.display = "flex";
+    }
+    function closeModal() { document.getElementById("borrowModal").style.display = "none"; }
+    function closeRepairModal() { document.getElementById("repairModal").style.display = "none"; }
+
+    // 提交借用申请
+    function submitBorrow() {
+        const reason = document.getElementById("borrowReason").value.trim();
+        const expectedTime = document.getElementById("expectedReturnTime").value;
+        if(!reason) { alert("请填写借用原因"); return; }
+        if(!expectedTime) { alert("请填写预计归还时间"); return; }
+        const device = devices.find(d => d.id === currentDeviceId);
+        if(!device) return;
+        const newId = Date.now();
+        const newRecord = {
+            id: newId,
+            device_id: device.id,
+            device_name: device.device_name,
+            apply_time: new Date().toLocaleString(),
+            expected_return: expectedTime.replace("T", " "),
+            actual_return: null,
+            status: "待审批",
+            statusType: "pending"
+        };
+        borrowRecords.unshift(newRecord);
+        // 设备状态不应立即改变，等待审批（演示未改动设备状态，保持可借状态不变）
+        renderBorrowRecords();
+        updateDashboardStats();
+        closeModal();
+        alert(`已提交借用申请（设备：${device.device_name}），待实验员审批。`);
+    }
+
+    // 报修提交
+    function submitRepair() {
+        const deviceId = parseInt(document.getElementById("repairDeviceSelect").value);
+        const fault = document.getElementById("faultDesc").value.trim();
+        if(!deviceId || !fault) { alert("请选择设备并填写故障描述"); return; }
+        const device = devices.find(d => d.id === deviceId);
+        if(!device) return;
+        const newRepair = {
+            id: Date.now(),
+            device_id: device.id,
+            device_name: device.device_name,
+            fault_desc: fault,
+            report_time: new Date().toLocaleString(),
+            status: "待处理",
+            result: "等待维修"
+        };
+        repairs.unshift(newRepair);
+        renderRepairs();
+        updateDashboardStats();
+        closeRepairModal();
+        alert("报修申请已提交，管理员将尽快处理。");
+    }
+
+    // 填充报修设备下拉框
+    function fillRepairDeviceSelect() {
+        const select = document.getElementById("repairDeviceSelect");
+        select.innerHTML = '<option value="">--选择设备--</option>';
+        devices.forEach(dev => {
+            select.innerHTML += `<option value="${dev.id}">${dev.device_name} (${dev.device_no})</option>`;
+        });
+    }
+
+    // 导航切换
+    function initNavigation() {
+        const navs = document.querySelectorAll('.nav-item');
+        const panels = ['dashboardPanel', 'devicesPanel', 'myborrowPanel', 'repairsPanel', 'noticesPanel'];
+        navs.forEach(nav => {
+            nav.addEventListener('click', () => {
+                const panelName = nav.dataset.panel;
+                navs.forEach(n => n.classList.remove('active'));
+                nav.classList.add('active');
+                panels.forEach(p => document.getElementById(p).classList.remove('active-panel'));
+                if(panelName === 'dashboard') document.getElementById('dashboardPanel').classList.add('active-panel');
+                if(panelName === 'devices') { document.getElementById('devicesPanel').classList.add('active-panel'); renderDeviceList(); }
+                if(panelName === 'myborrow') { document.getElementById('myborrowPanel').classList.add('active-panel'); renderBorrowRecords(); }
+                if(panelName === 'repairs') { document.getElementById('repairsPanel').classList.add('active-panel'); renderRepairs(); fillRepairDeviceSelect(); }
+                if(panelName === 'notices') { document.getElementById('noticesPanel').classList.add('active-panel'); renderNotices(); }
+            });
+        });
+        // 搜索设备
+        document.getElementById('searchDeviceBtn').addEventListener('click', () => {
+            const kw = document.getElementById('deviceSearch').value;
+            renderDeviceList(kw);
+        });
+        document.getElementById('deviceSearch').addEventListener('keyup', (e) => {
+            if(e.key === 'Enter') renderDeviceList(e.target.value);
+        });
+    }
+
+    // 退出登录
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        sessionStorage.clear();
+        alert("已退出登录，返回登录页");
+        window.location.href = "login.html"; // 假设登录页面为同级login.html，实际可替换
+    });
+
+    // 模态框事件绑定
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('confirmBorrowBtn').addEventListener('click', submitBorrow);
+    document.getElementById('newRepairBtn').addEventListener('click', () => {
+        fillRepairDeviceSelect();
+        document.getElementById('repairModal').style.display = "flex";
+    });
+    document.getElementById('closeRepairModalBtn').addEventListener('click', closeRepairModal);
+    document.getElementById('confirmRepairBtn').addEventListener('click', submitRepair);
+    window.onclick = function(e) { if(e.target.classList.contains('modal')) e.target.style.display = "none"; };
+
+    // 初始化
+    function init() {
+        document.getElementById("studentName").innerText = currentStudent.realName;
+        renderDeviceList();
+        renderBorrowRecords();
+        renderRepairs();
+        renderNotices();
+        updateDashboardStats();
+        initNavigation();
+        fillRepairDeviceSelect();
+    }
+    init();
+</script>
+</body>
+</html>
