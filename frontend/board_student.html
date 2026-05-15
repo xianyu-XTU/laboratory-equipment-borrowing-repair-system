@@ -421,7 +421,7 @@
             </div>
         </div>
     </div>
-    <footer>实验室设备管理系统 · 学生端控制面板 (模拟数据体验)</footer>
+    <footer>实验室设备管理系统 · 学生端控制面板</footer>
 </div>
 
 <!-- 借用申请模态框 -->
@@ -452,37 +452,34 @@
     </div>
 </div>
 
+<script src="js/auth.js"></script>
+<script src="js/storage.js"></script>
 <script>
-    // ---------- 模拟全局数据 (基于前端存储，页面刷新重置为初始演示数据) ----------
-    let currentStudent = { id: 3, username: "student", realName: "学生用户", role: "学生", phone: "13800000002" };
+    initSharedData();
+    const currentStudent = requireAuth(['学生']);
+    if (!currentStudent) throw new Error('未登录');
 
-    // 设备库
-    let devices = [
-        { id: 1, device_no: "DEV2026001", device_name: "数字示波器", category: "电子测量设备", location: "A101实验室", status: "可借", statusCode: 1 },
-        { id: 2, device_no: "DEV2026002", device_name: "数字万用表", category: "电子测量设备", location: "A101实验室", status: "可借", statusCode: 1 },
-        { id: 3, device_no: "DEV2026003", device_name: "实验室台式电脑", category: "计算机设备", location: "B203实验室", status: "已借出", statusCode: 2 },
-        { id: 4, device_no: "DEV2026004", device_name: "电子天平", category: "化学实验设备", location: "C301实验室", status: "维修中", statusCode: 3 },
-        { id: 5, device_no: "DEV2026005", device_name: "信号发生器", category: "电子测量设备", location: "A102实验室", status: "可借", statusCode: 1 }
-    ];
-
-    // 借用记录 (包含申请和已通过借用的)
-    let borrowRecords = [
-        { id: 1, device_id: 3, device_name: "实验室台式电脑", apply_time: "2026-04-20 10:00", expected_return: "2026-05-10", actual_return: null, status: "借用中", statusType: "borrowed" },
-        { id: 2, device_id: 2, device_name: "数字万用表", apply_time: "2026-04-25 14:30", expected_return: "2026-05-05", actual_return: "2026-05-03", status: "已归还", statusType: "returned" },
-        { id: 3, device_id: 5, device_name: "信号发生器", apply_time: "2026-05-01 09:15", expected_return: "2026-05-20", actual_return: null, status: "待审批", statusType: "pending" }
-    ];
-
-    // 报修记录
-    let repairs = [
-        { id: 1, device_id: 4, device_name: "电子天平", fault_desc: "显示屏不亮", report_time: "2026-04-18 15:20", status: "维修中", result: "已安排维修" }
-    ];
-
-    // 公告
-    let notices = [
-        { id: 1, title: "五一假期实验室开放安排", content: "5月1日-5月5日实验室正常开放，设备借用需提前申请。", publish_time: "2026-04-28" },
-        { id: 2, title: "新设备已入库", content: "新增20套单片机开发板，欢迎同学们借用学习。", publish_time: "2026-04-25" },
-        { id: 3, title: "设备维护提醒", content: "示波器固件升级已完成，借用时注意规范操作。", publish_time: "2026-04-20" }
-    ];
+    function getMyApplies() {
+        return getApplies().filter(a => a.user_id === currentStudent.id || a.user_name === currentStudent.realName);
+    }
+    function getMyRecords() {
+        return getRecords().filter(r => r.user_id === currentStudent.id || r.user_name === currentStudent.realName);
+    }
+    function getMyRepairs() {
+        return getRepairs().filter(r => r.user_id === currentStudent.id || r.user_name === currentStudent.realName);
+    }
+    function getMyBorrowView() {
+        const applies = getMyApplies().filter(a => a.status === '待审批').map(a => ({
+            id: a.id, device_name: a.device_name, apply_time: a.apply_time,
+            expected_return: a.expected_return, status: '待审批', type: 'apply'
+        }));
+        const records = getMyRecords().map(r => ({
+            id: r.id, device_name: r.device_name,
+            apply_time: r.borrow_time || '-', expected_return: r.expected_return,
+            status: r.status, type: 'record'
+        }));
+        return [...applies, ...records].sort((a, b) => new Date(b.apply_time) - new Date(a.apply_time));
+    }
 
     // 辅助函数 
     function getBadge(status) {
@@ -495,34 +492,27 @@
         return status;
     }
 
-    // 更新仪表盘统计数据
     function updateDashboardStats() {
-        const borrowing = borrowRecords.filter(r => r.status === "借用中").length;
-        const returned = borrowRecords.filter(r => r.status === "已归还").length;
-        const pendingRepair = repairs.filter(r => r.status !== "已完成").length;
-        document.getElementById("borrowingCount").innerText = borrowing;
-        document.getElementById("returnedCount").innerText = returned;
-        document.getElementById("pendingRepairCount").innerText = pendingRepair;
-        document.getElementById("noticeCount").innerText = notices.length;
+        const myRecords = getMyRecords();
+        const myRepairs = getMyRepairs();
+        document.getElementById("borrowingCount").innerText = myRecords.filter(r => r.status === "借用中").length;
+        document.getElementById("returnedCount").innerText = myRecords.filter(r => r.status === "已归还").length;
+        document.getElementById("pendingRepairCount").innerText = myRepairs.filter(r => r.status !== "已完成").length;
+        document.getElementById("noticeCount").innerText = getNotices().length;
 
-        // 最近借用动态 (最多3条)
-        const recent = [...borrowRecords].sort((a,b)=> new Date(b.apply_time) - new Date(a.apply_time)).slice(0,3);
+        const recent = getMyBorrowView().slice(0, 3);
         const tbody = document.querySelector("#recentBorrowTable tbody");
-        if(recent.length === 0) tbody.innerHTML = '<tr><td colspan="3" class="empty-row">暂无记录</td></tr>';
-        else {
-            tbody.innerHTML = recent.map(r => `<tr><td>${r.device_name}</td><td>${r.apply_time}</td><td>${getBadge(r.status)}</td></tr>`).join('');
-        }
-        // 报修提醒
-        const recentRepair = repairs.slice(0,3);
+        if (recent.length === 0) tbody.innerHTML = '<tr><td colspan="3" class="empty-row">暂无记录</td></tr>';
+        else tbody.innerHTML = recent.map(r => `<tr><td>${r.device_name}</td><td>${r.apply_time}</td><td>${getBadge(r.status)}</td></tr>`).join('');
+
+        const recentRepair = myRepairs.slice(0, 3);
         const repairTbody = document.querySelector("#recentRepairTable tbody");
-        if(recentRepair.length === 0) repairTbody.innerHTML = '<tr><td colspan="3" class="empty-row">暂无报修</td></tr>';
-        else {
-            repairTbody.innerHTML = recentRepair.map(r => `<tr><td>${r.device_name}</td><td>${r.fault_desc}</td><td>${getBadge(r.status === "维修中" ? "维修中" : (r.status==="已完成"?"已完成":"待处理"))}</td></tr>`).join('');
-        }
+        if (recentRepair.length === 0) repairTbody.innerHTML = '<tr><td colspan="3" class="empty-row">暂无报修</td></tr>';
+        else repairTbody.innerHTML = recentRepair.map(r => `<tr><td>${r.device_name}</td><td>${r.fault_desc}</td><td>${getBadge(r.status === "维修中" ? "维修中" : (r.status === "已完成" ? "已完成" : "待处理"))}</td></tr>`).join('');
     }
 
-    // 渲染设备列表
     function renderDeviceList(filterText = "") {
+        const devices = getDevices();
         let filtered = devices.filter(d => d.device_name.includes(filterText) || d.device_no.includes(filterText));
         const tbody = document.getElementById("deviceTableBody");
         if(filtered.length === 0) tbody.innerHTML = '<tr><td colspan="6" class="empty-row">暂无设备</td></tr>';
@@ -545,41 +535,38 @@
         }
     }
 
-    // 渲染我的借用记录
     function renderBorrowRecords() {
+        const items = getMyBorrowView();
         const tbody = document.getElementById("borrowTableBody");
-        if(borrowRecords.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="empty-row">暂无借用记录</td></tr>';
+        if (items.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="empty-row">暂无借用记录</td></tr>';
         else {
-            tbody.innerHTML = borrowRecords.map(rec => `
+            tbody.innerHTML = items.map(rec => `
                 <tr>
                     <td>${rec.device_name}</td>
                     <td>${rec.apply_time}</td><td>${rec.expected_return}</td>
                     <td>${getBadge(rec.status)}</td>
-                    <td>${rec.status === "待审批" ? `<button class="btn-sm cancel-borrow" data-id="${rec.id}">取消申请</button>` : (rec.status === "借用中" ? `<button class="btn-sm return-device" data-id="${rec.id}" data-name="${rec.device_name}">提醒归还</button>` : '-')}</td>
+                    <td>${rec.status === "待审批" ? `<button class="btn-sm cancel-borrow" data-id="${rec.id}">取消申请</button>` : (rec.status === "借用中" ? `<button class="btn-sm return-device">提醒归还</button>` : '-')}</td>
                 </tr>
             `).join('');
-            // 取消申请逻辑
             document.querySelectorAll('.cancel-borrow').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', () => {
                     const id = parseInt(btn.dataset.id);
-                    borrowRecords = borrowRecords.filter(r => r.id !== id);
+                    saveApplies(getApplies().filter(a => a.id !== id));
                     renderBorrowRecords();
                     updateDashboardStats();
                     alert("已取消借用申请。");
                 });
             });
             document.querySelectorAll('.return-device').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    alert("归还操作请联系实验员办理，此为学生端演示提醒。");
-                });
+                btn.addEventListener('click', () => alert("归还操作请联系实验员办理。"));
             });
         }
     }
 
-    // 渲染报修记录
     function renderRepairs() {
+        const repairs = getMyRepairs();
         const tbody = document.getElementById("repairTableBody");
-        if(repairs.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="empty-row">暂无报修记录</td></tr>';
+        if (repairs.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="empty-row">暂无报修记录</td></tr>';
         else {
             tbody.innerHTML = repairs.map(r => `
                 <tr>
@@ -591,10 +578,10 @@
         }
     }
 
-    // 渲染公告
     function renderNotices() {
+        const notices = getNotices();
         const container = document.getElementById("noticeList");
-        if(notices.length === 0) container.innerHTML = '<div class="empty-row">暂无公告</div>';
+        if (notices.length === 0) container.innerHTML = '<div class="empty-row">暂无公告</div>';
         else {
             container.innerHTML = notices.map(n => `
                 <div style="background:#f9fbfd; border-radius:1.2rem; padding:1rem; border-left:5px solid #2c7da0;">
@@ -618,61 +605,62 @@
     function closeModal() { document.getElementById("borrowModal").style.display = "none"; }
     function closeRepairModal() { document.getElementById("repairModal").style.display = "none"; }
 
-    // 提交借用申请
     function submitBorrow() {
         const reason = document.getElementById("borrowReason").value.trim();
         const expectedTime = document.getElementById("expectedReturnTime").value;
-        if(!reason) { alert("请填写借用原因"); return; }
-        if(!expectedTime) { alert("请填写预计归还时间"); return; }
-        const device = devices.find(d => d.id === currentDeviceId);
-        if(!device) return;
-        const newId = Date.now();
-        const newRecord = {
-            id: newId,
+        if (!reason) { alert("请填写借用原因"); return; }
+        if (!expectedTime) { alert("请填写预计归还时间"); return; }
+        const device = getDevices().find(d => d.id === currentDeviceId);
+        if (!device) return;
+        if (device.status !== "可借") { alert("该设备当前不可借用"); return; }
+        const applies = getApplies();
+        applies.unshift({
+            id: Date.now(),
+            user_id: currentStudent.id,
+            user_name: currentStudent.realName,
             device_id: device.id,
             device_name: device.device_name,
+            reason: reason,
             apply_time: new Date().toLocaleString(),
             expected_return: expectedTime.replace("T", " "),
-            actual_return: null,
-            status: "待审批",
-            statusType: "pending"
-        };
-        borrowRecords.unshift(newRecord);
-        // 设备状态不应立即改变，等待审批（演示未改动设备状态，保持可借状态不变）
+            status: "待审批"
+        });
+        saveApplies(applies);
         renderBorrowRecords();
         updateDashboardStats();
         closeModal();
         alert(`已提交借用申请（设备：${device.device_name}），待实验员审批。`);
     }
 
-    // 报修提交
     function submitRepair() {
         const deviceId = parseInt(document.getElementById("repairDeviceSelect").value);
         const fault = document.getElementById("faultDesc").value.trim();
-        if(!deviceId || !fault) { alert("请选择设备并填写故障描述"); return; }
-        const device = devices.find(d => d.id === deviceId);
-        if(!device) return;
-        const newRepair = {
+        if (!deviceId || !fault) { alert("请选择设备并填写故障描述"); return; }
+        const device = getDevices().find(d => d.id === deviceId);
+        if (!device) return;
+        const repairs = getRepairs();
+        repairs.unshift({
             id: Date.now(),
+            user_id: currentStudent.id,
             device_id: device.id,
             device_name: device.device_name,
+            user_name: currentStudent.realName,
             fault_desc: fault,
             report_time: new Date().toLocaleString(),
             status: "待处理",
             result: "等待维修"
-        };
-        repairs.unshift(newRepair);
+        });
+        saveRepairs(repairs);
         renderRepairs();
         updateDashboardStats();
         closeRepairModal();
-        alert("报修申请已提交，管理员将尽快处理。");
+        alert("报修申请已提交，实验员/管理员将尽快处理。");
     }
 
-    // 填充报修设备下拉框
     function fillRepairDeviceSelect() {
         const select = document.getElementById("repairDeviceSelect");
         select.innerHTML = '<option value="">--选择设备--</option>';
-        devices.forEach(dev => {
+        getDevices().forEach(dev => {
             select.innerHTML += `<option value="${dev.id}">${dev.device_name} (${dev.device_no})</option>`;
         });
     }
@@ -704,12 +692,7 @@
         });
     }
 
-    // 退出登录
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        sessionStorage.clear();
-        alert("已退出登录，返回登录页");
-        window.location.href = "login.html"; // 假设登录页面为同级login.html，实际可替换
-    });
+    document.getElementById('logoutBtn').addEventListener('click', logout);
 
     // 模态框事件绑定
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);

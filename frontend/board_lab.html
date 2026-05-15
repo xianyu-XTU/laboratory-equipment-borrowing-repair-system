@@ -351,68 +351,12 @@
 <!-- 发布公告模态框 -->
 <div id="noticeModal" class="modal"><div class="modal-content"><h3>发布公告</h3><input type="text" id="noticeTitle" placeholder="标题"><textarea id="noticeContent" rows="3" placeholder="内容"></textarea><div class="modal-buttons"><button class="btn-sm" id="closeNoticeModal">取消</button><button class="btn-sm primary" id="confirmNoticeBtn">发布</button></div></div></div>
 
+<script src="js/auth.js"></script>
+<script src="js/storage.js"></script>
 <script>
-    // ---------- 实验员端模拟数据 (基于 localStorage 持久化) ----------
-    const STORAGE_DEVICES = "lab_devices";
-    const STORAGE_BORROW_APPLIES = "lab_borrow_applies";
-    const STORAGE_BORROW_RECORDS = "lab_borrow_records";
-    const STORAGE_REPAIRS = "lab_repairs";
-    const STORAGE_NOTICES = "lab_notices";
-
-    // 初始化默认数据
-    function initData() {
-        if (!localStorage.getItem(STORAGE_DEVICES)) {
-            const defaultDevices = [
-                { id: 1, device_no: "DEV2026001", device_name: "数字示波器", category: "电子测量", location: "A101", status: "可借" },
-                { id: 2, device_no: "DEV2026002", device_name: "数字万用表", category: "电子测量", location: "A101", status: "可借" },
-                { id: 3, device_no: "DEV2026003", device_name: "实验室台式电脑", category: "计算机", location: "B203", status: "已借出" },
-                { id: 4, device_no: "DEV2026004", device_name: "电子天平", category: "化学", location: "C301", status: "维修中" }
-            ];
-            localStorage.setItem(STORAGE_DEVICES, JSON.stringify(defaultDevices));
-        }
-        if (!localStorage.getItem(STORAGE_BORROW_APPLIES)) {
-            const defaultApplies = [
-                { id: 101, user_name: "张同学", device_id: 2, device_name: "数字万用表", reason: "课程实验", apply_time: "2026-05-04 09:30", expected_return: "2026-05-18", status: "待审批", user_id: 3 },
-                { id: 102, user_name: "李同学", device_id: 5, device_name: "信号发生器", reason: "电子设计竞赛", apply_time: "2026-05-05 10:15", expected_return: "2026-06-01", status: "待审批", user_id: 4 }
-            ];
-            localStorage.setItem(STORAGE_BORROW_APPLIES, JSON.stringify(defaultApplies));
-        }
-        if (!localStorage.getItem(STORAGE_BORROW_RECORDS)) {
-            const defaultRecords = [
-                { id: 1, device_id: 3, device_name: "实验室台式电脑", user_name: "王同学", borrow_time: "2026-04-20 14:00", expected_return: "2026-05-10", return_time: null, status: "借用中" },
-                { id: 2, device_id: 1, device_name: "数字示波器", user_name: "赵同学", borrow_time: "2026-05-01 09:00", expected_return: "2026-05-15", return_time: "2026-05-04", status: "已归还" }
-            ];
-            localStorage.setItem(STORAGE_BORROW_RECORDS, JSON.stringify(defaultRecords));
-        }
-        if (!localStorage.getItem(STORAGE_REPAIRS)) {
-            const defaultRepairs = [
-                { id: 1, device_id: 4, device_name: "电子天平", user_name: "孙老师", fault_desc: "无法校准", report_time: "2026-04-28", status: "维修中", result: "已联系厂家" }
-            ];
-            localStorage.setItem(STORAGE_REPAIRS, JSON.stringify(defaultRepairs));
-        }
-        if (!localStorage.getItem(STORAGE_NOTICES)) {
-            const defaultNotices = [
-                { id: 1, title: "五一假期实验室开放安排", content: "5月1日-5日正常开放，借用请提前申请。", publish_time: "2026-04-28", publisher: "实验员" }
-            ];
-            localStorage.setItem(STORAGE_NOTICES, JSON.stringify(defaultNotices));
-        }
-        // 补全可能缺失的device 5
-        let devices = JSON.parse(localStorage.getItem(STORAGE_DEVICES));
-        if (!devices.find(d => d.id === 5)) {
-            devices.push({ id: 5, device_no: "DEV2026005", device_name: "信号发生器", category: "电子测量", location: "A102", status: "可借" });
-            localStorage.setItem(STORAGE_DEVICES, JSON.stringify(devices));
-        }
-    }
-    function getDevices() { return JSON.parse(localStorage.getItem(STORAGE_DEVICES)) || []; }
-    function saveDevices(devices) { localStorage.setItem(STORAGE_DEVICES, JSON.stringify(devices)); }
-    function getApplies() { return JSON.parse(localStorage.getItem(STORAGE_BORROW_APPLIES)) || []; }
-    function saveApplies(applies) { localStorage.setItem(STORAGE_BORROW_APPLIES, JSON.stringify(applies)); }
-    function getRecords() { return JSON.parse(localStorage.getItem(STORAGE_BORROW_RECORDS)) || []; }
-    function saveRecords(records) { localStorage.setItem(STORAGE_BORROW_RECORDS, JSON.stringify(records)); }
-    function getRepairs() { return JSON.parse(localStorage.getItem(STORAGE_REPAIRS)) || []; }
-    function saveRepairs(repairs) { localStorage.setItem(STORAGE_REPAIRS, JSON.stringify(repairs)); }
-    function getNotices() { return JSON.parse(localStorage.getItem(STORAGE_NOTICES)) || []; }
-    function saveNotices(notices) { localStorage.setItem(STORAGE_NOTICES, JSON.stringify(notices)); }
+    initSharedData();
+    const currentLabUser = requireAuth(['实验员']);
+    if (!currentLabUser) throw new Error('未登录');
 
     // 通用UI刷新
     function refreshAll() {
@@ -463,7 +407,7 @@
             if(device) { device.status = "已借出"; saveDevices(devices); }
             // 生成借用记录
             const records = getRecords();
-            const newRecord = { id: Date.now(), device_id: apply.device_id, device_name: apply.device_name, user_name: apply.user_name, borrow_time: new Date().toLocaleString(), expected_return: apply.expected_return, return_time: null, status: "借用中" };
+            const newRecord = { id: Date.now(), user_id: apply.user_id, device_id: apply.device_id, device_name: apply.device_name, user_name: apply.user_name, borrow_time: new Date().toLocaleString(), expected_return: apply.expected_return, return_time: null, status: "借用中" };
             records.push(newRecord);
             saveRecords(records);
             // 删除申请
@@ -617,8 +561,9 @@
         const panels = ['dashboardPanel','approvePanel','borrowReturnPanel','devicesPanel','repairsPanel','noticesPanel'];
         navs.forEach(nav=>{nav.addEventListener('click',()=>{ const panel=nav.dataset.panel; navs.forEach(n=>n.classList.remove('active')); nav.classList.add('active'); panels.forEach(p=>document.getElementById(p).classList.remove('active-panel')); if(panel==='dashboard') document.getElementById('dashboardPanel').classList.add('active-panel'); if(panel==='approve') document.getElementById('approvePanel').classList.add('active-panel'); if(panel==='borrowReturn') document.getElementById('borrowReturnPanel').classList.add('active-panel'); if(panel==='devices') document.getElementById('devicesPanel').classList.add('active-panel'); if(panel==='repairs') document.getElementById('repairsPanel').classList.add('active-panel'); if(panel==='notices') document.getElementById('noticesPanel').classList.add('active-panel'); if(panel==='devices') refreshDeviceTable(); if(panel==='approve') refreshApproveTable(); if(panel==='borrowReturn') refreshBorrowReturn(); if(panel==='repairs') refreshRepairTable(); if(panel==='notices') refreshNoticeList(); }); });
     }
-    document.getElementById("logoutBtn").addEventListener('click',()=>{ sessionStorage.clear(); alert("已退出登录"); window.location.href="login.html"; });
-    initData(); refreshAll(); initNav();
+    document.getElementById("logoutBtn").addEventListener('click', logout);
+    document.getElementById("labUserName").innerText = currentLabUser.realName;
+    refreshAll(); initNav();
     window.openRepairProcess = openRepairProcess;
 </script>
 </body>

@@ -280,9 +280,11 @@
     </div>
 </div>
 
+<script src="js/auth.js"></script>
+<script src="js/storage.js"></script>
 <script>
     // ---------- 模拟本地数据库 ----------
-    const STORAGE_KEY = "lab_equipment_users";
+    const STORAGE_KEY = STORAGE_KEYS.USERS;
     const defaultUsers = [
         {
             id: 1,
@@ -461,13 +463,15 @@
             loginMessageDiv.innerHTML = `<span style="color: #2c7da0;">✓ ${result.message}</span>`;
             loginMessageDiv.style.color = "#155f7c";
             sessionStorage.setItem("lab_logged_user", JSON.stringify({ 
+                id: result.user.id,
                 username: result.user.username, 
                 role: result.user.role,
+                roleCode: result.user.roleCode,
                 realName: result.user.realName
             }));
-            setTimeout(() => {
-                alert(`登录成功！\n${result.message}\n即将跳转至控制台（演示）`);
-            }, 50);
+            const targetPage = getRolePage(result.user.role);
+            loginMessageDiv.innerHTML += `<br><span style="font-size:0.75rem;">正在跳转...</span>`;
+            setTimeout(() => { window.location.href = targetPage; }, 800);
         } else {
             loginMessageDiv.innerHTML = `<span style="color: #e25c5c;">✗ ${result.message}</span>`;
             loginMessageDiv.style.color = "#e25c5c";
@@ -544,6 +548,8 @@
     document.getElementById('regRole').addEventListener('change', clearRegErr);
 
     initUserData();
+    initSharedData();
+    redirectIfLoggedIn();
     
     console.log("实验室设备管理系统已启动 | 预设账号: admin, lab, student (密码均为123456)");
 </script>
