@@ -1,467 +1,307 @@
-/**
- * 实验室设备管理系统 - 后端 API 统一封装
- */
-const API_BASE = 'http://localhost:8080';
-
-const ROLE_ID_MAP = { '学生': 1, '实验员': 2, '管理员': 3 };
-const ROLE_CODE_MAP = { ADMIN: '管理员', LAB_ADMIN: '实验员', STUDENT: '学生' };
-const ROLE_NAME_TO_CODE = { '管理员': 'ADMIN', '实验员': 'LAB_ADMIN', '学生': 'STUDENT' };
-
-const DEVICE_STATUS_TEXT = { 1: '可借', 2: '已借出', 3: '维修中', 4: '报废' };
-const DEVICE_STATUS_CODE = { '可借': 1, '已借出': 2, '维修中': 3, '报废': 4 };
-
-const APPLY_STATUS_TEXT = { 0: '待审批', 1: '已通过', 2: '已拒绝' };
-const RECORD_STATUS_TEXT = { 1: '借用中', 2: '已归还', 3: '逾期' };
-const REPAIR_STATUS_TEXT = { 0: '待处理', 1: '维修中', 2: '已完成' };
-const REPAIR_STATUS_CODE = { '待处理': 0, '维修中': 1, '已完成': 2 };
-
-let _categories = [];
-let _userMap = {};
-let _deviceMap = {};
+const API_BASE = "http://localhost:8080";
 
 function getToken() {
-    const user = getLoggedUser();
-    return user ? user.token : null;
+    return localStorage.getItem("token") || "";
 }
 
-async function request(method, path, body, auth = true) {
-    const headers = { 'Content-Type': 'application/json' };
-    if (auth) {
-        const token = getToken();
-        if (token) headers['Authorization'] = 'Bearer ' + token;
-    }
-    const opts = { method, headers };
-    if (body !== undefined) opts.body = JSON.stringify(body);
-
-    let res;
-    try {
-        res = await fetch(API_BASE + path, opts);
-    } catch (e) {
-        throw new Error('无法连接后端服务，请确认后端已启动（' + API_BASE + '）');
-    }
-
-    let json;
-    try {
-        json = await res.json();
-    } catch (e) {
-        throw new Error('服务器响应格式错误');
-    }
-
-    if (res.status === 401) {
-        sessionStorage.removeItem('lab_logged_user');
-        window.location.href = 'sign up and  sign in v2.html';
-        throw new Error('登录已过期，请重新登录');
-    }
-
-    if (json.code !== 200) {
-        throw new Error(json.message || '操作失败');
-    }
-    return json.data;
+function getLoginUser() {
+    const text = localStorage.getItem("loginUser");
+    if (!text) return null;
+    try { return JSON.parse(text); } catch (e) { return null; }
 }
 
-async function fetchAllPages(fetchPage) {
-    const all = [];
-    let page = 1;
-    const size = 100;
-    while (true) {
-        const data = await fetchPage(page, size);
-        const records = data.records || [];
-        all.push(...records);
-        if (records.length < size || page >= (data.pages || 1)) break;
-        page++;
-    }
-    return all;
+function roleCodeToName(code) {
+    return { ADMIN: "管理员", LAB_ADMIN: "实验员", STUDENT: "学生" }[code] || code || "学生";
 }
 
-function formatDateTime(val) {
-    if (!val) return '-';
-    return String(val).replace('T', ' ').substring(0, 16);
-}
-
-function roleIdToName(roleId) {
-    const map = { 1: '学生', 2: '实验员', 3: '管理员' };
-    return map[roleId] || '未知';
+function roleNameToCode(name) {
+    return { "管理员": "ADMIN", "实验员": "LAB_ADMIN", "学生": "STUDENT" }[name] || name || "STUDENT";
 }
 
 function roleNameToId(name) {
-    return ROLE_ID_MAP[name] || 1;
+    return { "管理员": 1, "实验员": 2, "学生": 3, ADMIN: 1, LAB_ADMIN: 2, STUDENT: 3 }[name] || 3;
 }
 
-function deviceStatusText(code) {
-    return DEVICE_STATUS_TEXT[code] || '未知';
+function roleIdToName(id) {
+    return { 1: "管理员", 2: "实验员", 3: "学生" }[Number(id)] || "学生";
 }
 
-function deviceStatusCode(text) {
-    return DEVICE_STATUS_CODE[text] ?? 1;
+function clearLogin() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("loginUser");
+    location.href = "login.html";
 }
 
-function repairStatusText(code) {
-    return REPAIR_STATUS_TEXT[code] ?? '未知';
+async function request(path, options = {}) {
+    const token = getToken();
+    const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+    if (token) headers.Authorization = "Bearer " + token;
+    let res;
+    try {
+        res = await fetch(API_BASE + path, { ...options, headers });
+    } catch (e) {
+        throw new Error("无法连接后端，请确认 Spring Boot 已在 8080 端口启动");
+    }
+    let data;
+    try { data = await res.json(); } catch (e) { throw new Error("服务器响应格式错误"); }
+    if (res.status === 401 || data.code === 401) { clearLogin(); throw new Error("登录已过期，请重新登录"); }
+    if (res.status === 403 || data.code === 403) throw new Error(data.message || "没有权限访问该接口");
+    if (data.code !== 200) throw new Error(data.message || data.msg || "请求失败");
+    return data.data;
 }
 
-function repairStatusCode(text) {
-    return REPAIR_STATUS_CODE[text] ?? 0;
+function requireLogin(roleList) {
+    const token = getToken();
+    const user = getLoginUser();
+    if (!token || !user) { location.href = "login.html"; return false; }
+    const codes = (roleList || []).map(roleNameToCode);
+    if (codes.length && !codes.includes(user.roleCode)) {
+        alert("没有访问权限");
+        location.href = "login.html";
+        return false;
+    }
+    return true;
 }
 
-function applyStatusText(code) {
-    return APPLY_STATUS_TEXT[code] ?? '未知';
+function requireAuth(roleList) {
+    const ok = requireLogin(roleList);
+    return ok ? getLoginUser() : null;
 }
 
-function recordStatusText(code) {
-    return RECORD_STATUS_TEXT[code] ?? '未知';
+function setLoggedUser(user) {
+    if (user.token) localStorage.setItem("token", user.token);
+    const fixed = normalizeUser(user);
+    localStorage.setItem("loginUser", JSON.stringify(fixed));
+    return fixed;
 }
 
-async function loadCategories() {
-    _categories = await request('GET', '/api/categories/all');
-    return _categories;
-}
-
-function getCategoryName(categoryId) {
-    const cat = _categories.find(c => c.id === categoryId);
-    return cat ? cat.categoryName : '-';
-}
-
-function findCategoryIdByName(name) {
-    if (!name) return null;
-    const cat = _categories.find(c => c.categoryName === name.trim());
-    return cat ? cat.id : null;
-}
-
-async function refreshUserMap() {
-    const users = await fetchAllPages((p, s) => request('GET', `/api/users?page=${p}&size=${s}`));
-    _userMap = {};
-    users.forEach(u => { _userMap[u.id] = u; });
-    return _userMap;
-}
-
-async function refreshDeviceMap() {
-    const devices = await fetchAllPages((p, s) => request('GET', `/api/devices?page=${p}&size=${s}`));
-    _deviceMap = {};
-    devices.forEach(d => { _deviceMap[d.id] = d; });
-    return _deviceMap;
-}
-
-function getUserName(userId) {
-    const u = _userMap[userId];
-    return u ? (u.realName || u.username) : ('用户#' + userId);
-}
-
-function getDeviceName(deviceId) {
-    const d = _deviceMap[deviceId];
-    return d ? d.deviceName : ('设备#' + deviceId);
-}
-
-function mapDevice(d) {
+function normalizeUser(user) {
+    const roleCode = user.roleCode || roleNameToCode(user.role);
     return {
-        id: d.id,
-        device_no: d.deviceNo,
-        device_name: d.deviceName,
-        category: getCategoryName(d.categoryId),
-        categoryId: d.categoryId,
-        location: d.location || '-',
-        status: deviceStatusText(d.status),
-        statusCode: d.status,
-        model: d.model,
-        description: d.description
+        ...user,
+        roleCode,
+        role: user.role || roleCodeToName(roleCode),
+        realName: user.realName || user.username || "用户"
     };
 }
 
-function mapUser(u) {
+function getRolePage(role) {
+    const code = roleNameToCode(role);
+    if (code === "ADMIN") return "board_admin.html";
+    if (code === "LAB_ADMIN") return "board_lab.html";
+    return "board_student.html";
+}
+
+function redirectIfLoggedIn() {
+    const user = getLoginUser();
+    const token = getToken();
+    if (token && user) location.href = getRolePage(user.roleCode || user.role);
+}
+
+function logout() { clearLogin(); }
+function handleApiError(err) { alert((err && err.message) ? err.message : "操作失败"); }
+function val(id) { return document.getElementById(id).value.trim(); }
+function setText(id, text) { document.getElementById(id).innerText = text; }
+
+function formatDate(value) {
+    if (!value) return "-";
+    if (Array.isArray(value)) {
+        const [y, m, d, h = 0, mi = 0, s = 0] = value;
+        return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')} ${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+    return String(value).replace('T', ' ').slice(0, 19);
+}
+
+const deviceStatusMap = { 1: "可借", 2: "已借出", 3: "维修中", 4: "报废", 0: "停用" };
+const deviceStatusCodeMap = { "可借": 1, "已借出": 2, "维修中": 3, "报废": 4, "停用": 4 };
+const applyStatusMap = { 0: "待审批", 1: "已通过", 2: "已拒绝" };
+const recordStatusMap = { 1: "借用中", 2: "已归还", 3: "逾期" };
+const repairStatusMap = { 0: "待处理", 1: "维修中", 2: "已完成" };
+const repairStatusCodeMap = { "待处理": 0, "维修中": 1, "处理中": 1, "已完成": 2 };
+
+function statusDevice(s) { return deviceStatusMap[s] || s || "-"; }
+function statusApply(s) { return applyStatusMap[s] || s || "-"; }
+function statusRecord(s) { return recordStatusMap[s] || s || "-"; }
+function statusRepair(s) { return repairStatusMap[s] || s || "-"; }
+function repairStatusCode(s) { return typeof s === 'number' ? s : (repairStatusCodeMap[s] ?? 1); }
+function deviceStatusCode(s) { return typeof s === 'number' ? s : (deviceStatusCodeMap[s] ?? 1); }
+
+function pageRecords(p) { return (p && p.records) ? p.records : (Array.isArray(p) ? p : []); }
+
+function mapDevice(d) {
     return {
-        id: u.id,
-        username: u.username,
-        realName: u.realName,
-        phone: u.phone,
-        email: u.email,
-        role: roleIdToName(u.roleId),
-        roleId: u.roleId,
-        roleCode: ROLE_NAME_TO_CODE[roleIdToName(u.roleId)] || 'STUDENT',
-        status: u.status ?? 1
+        ...d,
+        device_no: d.deviceNo || d.device_no || "",
+        device_name: d.name || d.deviceName || d.device_name || "",
+        category: d.categoryName || d.category || d.categoryId || "-",
+        statusCode: Number(d.status),
+        status: statusDevice(d.status)
     };
 }
 
 function mapApply(a) {
     return {
-        id: a.id,
-        user_id: a.userId,
-        user_name: getUserName(a.userId),
-        device_id: a.deviceId,
-        device_name: getDeviceName(a.deviceId),
-        reason: a.applyReason,
-        apply_time: formatDateTime(a.applyTime),
-        expected_return: formatDateTime(a.expectedReturnTime),
-        expectedReturnTime: a.expectedReturnTime,
-        status: applyStatusText(a.status),
-        statusCode: a.status,
-        approve_remark: a.approveRemark
+        ...a,
+        user_name: a.userName || a.user_name || a.userId || "-",
+        device_name: a.deviceName || a.device_name || a.deviceId || "-",
+        device_no: a.deviceNo || a.device_no || "",
+        reason: a.applyReason || a.reason || "-",
+        apply_time: formatDate(a.applyTime || a.apply_time),
+        expected_return: formatDate(a.expectedReturnTime || a.expected_return),
+        statusCode: Number(a.status),
+        status: statusApply(a.status)
     };
 }
 
 function mapRecord(r) {
-    const apply = r._apply;
     return {
-        id: r.id,
-        apply_id: r.applyId,
-        user_id: r.userId,
-        user_name: getUserName(r.userId),
-        device_id: r.deviceId,
-        device_name: getDeviceName(r.deviceId),
-        borrow_time: formatDateTime(r.borrowTime),
-        return_time: formatDateTime(r.returnTime),
-        expected_return: apply ? formatDateTime(apply.expectedReturnTime) : '-',
-        status: recordStatusText(r.status),
-        statusCode: r.status,
-        remark: r.remark
+        ...r,
+        user_name: r.userName || r.user_name || r.userId || "-",
+        device_name: r.deviceName || r.device_name || r.deviceId || "-",
+        device_no: r.deviceNo || r.device_no || "",
+        borrow_time: formatDate(r.borrowTime || r.borrow_time),
+        return_time: formatDate(r.returnTime || r.return_time),
+        expected_return: formatDate(r.expectedReturnTime || r.expected_return),
+        statusCode: Number(r.status),
+        status: statusRecord(r.status),
+        overdue: r.isOverdue === 1 || r.isOverdue === true
     };
 }
 
 function mapRepair(r) {
     return {
-        id: r.id,
-        user_id: r.userId,
-        user_name: getUserName(r.userId),
-        device_id: r.deviceId,
-        device_name: getDeviceName(r.deviceId),
-        fault_desc: r.faultDesc,
-        report_time: formatDateTime(r.reportTime),
-        status: repairStatusText(r.repairStatus),
-        statusCode: r.repairStatus,
-        result: r.repairResult || '-'
+        ...r,
+        user_name: r.userName || r.user_name || r.userId || "-",
+        device_name: r.deviceName || r.device_name || r.deviceId || "-",
+        device_no: r.deviceNo || r.device_no || "",
+        fault_desc: r.faultDesc || r.fault_desc || "-",
+        report_time: formatDate(r.reportTime || r.report_time),
+        handle_time: formatDate(r.handleTime || r.handle_time),
+        result: r.handleResult || r.result || "-",
+        statusCode: Number(r.status),
+        status: statusRepair(r.status)
     };
 }
 
 function mapNotice(n) {
     return {
-        id: n.id,
-        title: n.title,
-        content: n.content,
-        publish_time: formatDateTime(n.publishTime),
-        publisher: getUserName(n.publishUserId),
-        status: n.status
+        ...n,
+        publish_time: formatDate(n.publishTime || n.publish_time),
+        publisher: n.publisher || n.publishUserId || "系统"
     };
 }
 
 const Api = {
     async login(username, password) {
-        const data = await request('POST', '/api/auth/login', { username, password }, false);
+        const data = await request('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+        return normalizeUser(data);
+    },
+    async register(data) {
+        return request('/api/auth/register', { method: 'POST', body: JSON.stringify(data) });
+    },
+    async getDevices(keyword = '') {
+        const q = keyword ? `&keyword=${encodeURIComponent(keyword)}` : '';
+        const p = await request(`/api/devices?page=1&size=100${q}`);
+        return pageRecords(p).map(mapDevice);
+    },
+    async saveDevice(data, id) {
+        const payload = {
+            id: id || data.id,
+            deviceNo: data.device_no || data.deviceNo,
+            name: data.device_name || data.name || data.deviceName,
+            model: data.model || '',
+            location: data.location || '',
+            categoryId: Number(data.categoryId || data.category_id || 1),
+            status: deviceStatusCode(data.status)
+        };
+        const method = payload.id ? 'PUT' : 'POST';
+        return request('/api/devices', { method, body: JSON.stringify(payload) });
+    },
+    async deleteDevice(id) {
+        return request(`/api/devices/${id}`, { method: 'DELETE' });
+    },
+    async getStats() {
+        const s = await request('/api/stats/overview');
+        let users = 0;
+        try {
+            const p = await request('/api/users?page=1&size=1');
+            users = p.total || 0;
+        } catch (e) { users = 0; }
         return {
-            token: data.token,
-            id: data.userId,
+            ...s,
+            userCount: users,
+            deviceCount: s.deviceTotal ?? 0,
+            pendingApplyCount: s.pendingApplies ?? 0,
+            pendingRepairCount: s.pendingRepairs ?? 0,
+            borrowingRecordCount: s.borrowingRecords ?? 0
+        };
+    },
+    async getApplies(status) {
+        const q = status !== undefined && status !== null ? `&status=${status}` : '';
+        const p = await request(`/api/borrow/applies?page=1&size=100${q}`);
+        return pageRecords(p).map(mapApply);
+    },
+    async getMyBorrowApplies() { return this.getApplies(); },
+    async applyBorrow(deviceId, applyReason, expectedReturnTime) {
+        return request('/api/borrow/apply', { method: 'POST', body: JSON.stringify({ deviceId, applyReason, expectedReturnTime }) });
+    },
+    async approveBorrow(applyId, approved) {
+        return request('/api/borrow/approve', { method: 'POST', body: JSON.stringify({ applyId, status: approved ? 1 : 2, approveRemark: approved ? '同意借用' : '拒绝借用' }) });
+    },
+    async getRecords(status) {
+        const q = status !== undefined && status !== null ? `&status=${status}` : '';
+        const p = await request(`/api/borrow/records?page=1&size=100${q}`);
+        return pageRecords(p).map(mapRecord);
+    },
+    async getMyBorrowRecords() { return this.getRecords(); },
+    async returnDevice(recordId, remark = '前端确认归还') {
+        return request('/api/borrow/return', { method: 'POST', body: JSON.stringify({ recordId, remark }) });
+    },
+    async getRepairs(status) {
+        const q = status !== undefined && status !== null ? `&status=${status}` : '';
+        const p = await request(`/api/repairs?page=1&size=100${q}`);
+        return pageRecords(p).map(mapRepair);
+    },
+    async getMyRepairs() { return this.getRepairs(); },
+    async reportRepair(deviceId, faultDesc) {
+        return request('/api/repairs/report', { method: 'POST', body: JSON.stringify({ deviceId, faultDesc }) });
+    },
+    async handleRepair(repairId, status, handleResult = '') {
+        return request('/api/repairs/handle', { method: 'POST', body: JSON.stringify({ repairId, status: repairStatusCode(status), handleResult }) });
+    },
+    async getNotices() {
+        const p = await request('/api/notices?page=1&size=100');
+        return pageRecords(p).map(mapNotice);
+    },
+    async publishNotice(title, content) {
+        return request('/api/notices', { method: 'POST', body: JSON.stringify({ title, content, status: 1 }) });
+    },
+    async deleteNotice(id) {
+        alert('当前后端未提供删除公告接口，公告不会被删除。');
+        return Promise.resolve();
+    },
+    async getUsers(keyword = '') {
+        const q = keyword ? `&keyword=${encodeURIComponent(keyword)}` : '';
+        const p = await request(`/api/users?page=1&size=100${q}`);
+        return pageRecords(p).map(u => ({ ...u, role: roleIdToName(u.roleId) }));
+    },
+    async saveUser(data) {
+        const payload = {
+            id: data.id,
             username: data.username,
             realName: data.realName,
-            roleCode: data.roleCode,
-            role: ROLE_CODE_MAP[data.roleCode] || '学生'
+            phone: data.phone,
+            roleId: roleNameToId(data.role),
+            status: Number(data.status ?? 1)
         };
+        if (!payload.id) payload.password = data.password || '123456';
+        return request('/api/users', { method: payload.id ? 'PUT' : 'POST', body: JSON.stringify(payload) });
     },
-
-    async register({ username, password, realName, phone, email }) {
-        await request('POST', '/api/auth/register', { username, password, realName, phone, email }, false);
+    async toggleUserStatus(id, currentStatus) {
+        const next = Number(currentStatus) === 1 ? 0 : 1;
+        return request(`/api/users/${id}/status?status=${next}`, { method: 'PUT' });
     },
-
-    async getProfile() {
-        const u = await request('GET', '/api/profile/me');
-        return mapUser(u);
-    },
-
-    async getStats() {
-        return request('GET', '/api/stats/overview');
-    },
-
-    async getUsers(keyword) {
-        await refreshUserMap();
-        let users = Object.values(_userMap).map(mapUser);
-        if (keyword) {
-            users = users.filter(u => u.username.includes(keyword) || (u.realName && u.realName.includes(keyword)));
-        }
-        return users;
-    },
-
-    async saveUser(userData, editingId) {
-        const payload = {
-            username: userData.username,
-            realName: userData.realName,
-            phone: userData.phone,
-            roleId: roleNameToId(userData.role),
-            status: userData.status
-        };
-        if (editingId) {
-            await request('PUT', `/api/users/${editingId}`, payload);
-        } else {
-            payload.password = '123456';
-            await request('POST', '/api/users', payload);
-        }
-    },
-
-    async resetUserPassword(userId) {
-        await request('PUT', `/api/users/${userId}`, { password: '123456' });
-    },
-
-    async toggleUserStatus(userId, currentStatus) {
-        await request('PUT', `/api/users/${userId}`, { status: currentStatus === 1 ? 0 : 1 });
-    },
-
-    async getDevices(keyword) {
-        await loadCategories();
-        const path = keyword
-            ? `/api/devices?page=1&size=500&keyword=${encodeURIComponent(keyword)}`
-            : '/api/devices?page=1&size=500';
-        const data = await request('GET', path);
-        const devices = (data.records || []).map(mapDevice);
-        devices.forEach(d => { _deviceMap[d.id] = { id: d.id, deviceName: d.device_name, deviceNo: d.device_no }; });
-        return devices;
-    },
-
-    async saveDevice(deviceData, editingId) {
-        await loadCategories();
-        const payload = {
-            deviceNo: deviceData.device_no,
-            deviceName: deviceData.device_name,
-            categoryId: findCategoryIdByName(deviceData.category),
-            location: deviceData.location,
-            status: deviceStatusCode(deviceData.status)
-        };
-        if (editingId) {
-            await request('PUT', `/api/devices/${editingId}`, payload);
-        } else {
-            await request('POST', '/api/devices', payload);
-        }
-    },
-
-    async deleteDevice(id) {
-        await request('DELETE', `/api/devices/${id}`);
-    },
-
-    async getApplies(status) {
-        await refreshUserMap();
-        await refreshDeviceMap();
-        let path = '/api/borrow/applies?page=1&size=500';
-        if (status !== undefined && status !== null) path += `&status=${status}`;
-        const data = await request('GET', path);
-        return (data.records || []).map(mapApply);
-    },
-
-    async getRecords(status) {
-        await refreshUserMap();
-        await refreshDeviceMap();
-        let path = '/api/borrow/records?page=1&size=500';
-        if (status !== undefined && status !== null) path += `&status=${status}`;
-        const data = await request('GET', path);
-        const rawApplies = await fetchAllPages((p, s) => request('GET', `/api/borrow/applies?page=${p}&size=${s}`));
-        const applyMap = {};
-        rawApplies.forEach(a => { applyMap[a.id] = a; });
-        return (data.records || []).map(r => {
-            r._apply = applyMap[r.applyId] || null;
-            return mapRecord(r);
-        });
-    },
-
-    async approveBorrow(applyId, approved, remark) {
-        await request('POST', '/api/borrow/approve', {
-            applyId,
-            status: approved ? 1 : 2,
-            approveRemark: remark || ''
-        });
-    },
-
-    async returnDevice(recordId, remark) {
-        await request('POST', '/api/borrow/return', { recordId, remark: remark || '' });
-    },
-
-    async applyBorrow(deviceId, applyReason, expectedReturnTime) {
-        await request('POST', '/api/borrow/apply', {
-            deviceId,
-            applyReason,
-            expectedReturnTime
-        });
-    },
-
-    async getRepairs(repairStatus) {
-        await refreshUserMap();
-        await refreshDeviceMap();
-        let path = '/api/repairs?page=1&size=500';
-        if (repairStatus !== undefined && repairStatus !== null) path += `&repairStatus=${repairStatus}`;
-        const data = await request('GET', path);
-        return (data.records || []).map(mapRepair);
-    },
-
-    async reportRepair(deviceId, faultDesc) {
-        await request('POST', '/api/repairs/report', { deviceId, faultDesc });
-    },
-
-    async handleRepair(repairId, repairStatus, repairResult) {
-        await request('POST', '/api/repairs/handle', { repairId, repairStatus, repairResult });
-    },
-
-    async deleteRepair(id) {
-        await request('DELETE', `/api/repairs/${id}`);
-    },
-
-    async getNotices(keyword) {
-        await refreshUserMap();
-        let path = '/api/notices?page=1&size=500';
-        if (keyword) path += `&keyword=${encodeURIComponent(keyword)}`;
-        const data = await request('GET', path);
-        return (data.records || []).map(mapNotice);
-    },
-
-    async publishNotice(title, content) {
-        await request('POST', '/api/notices', { title, content, status: 1 });
-    },
-
-    async deleteNotice(id) {
-        await request('DELETE', `/api/notices/${id}`);
-    },
-
-    async getMyBorrowApplies(status) {
-        await refreshDeviceMap();
-        let path = '/api/my/borrow-applies?page=1&size=500';
-        if (status !== undefined && status !== null) path += `&status=${status}`;
-        const data = await request('GET', path);
-        return (data.records || []).map(a => {
-            const m = mapApply(a);
-            m.user_name = getLoggedUser().realName;
-            return m;
-        });
-    },
-
-    async getMyBorrowRecords(status) {
-        await refreshDeviceMap();
-        let path = '/api/my/borrow-records?page=1&size=500';
-        if (status !== undefined && status !== null) path += `&status=${status}`;
-        const data = await request('GET', path);
-        const rawApplies = await fetchAllPages((p, s) => request('GET', `/api/my/borrow-applies?page=${p}&size=${s}`));
-        const applyMap = {};
-        rawApplies.forEach(a => { applyMap[a.id] = a; });
-        return (data.records || []).map(r => {
-            r._apply = applyMap[r.applyId] || null;
-            const m = mapRecord(r);
-            m.user_name = getLoggedUser().realName;
-            return m;
-        });
-    },
-
-    async getMyRepairs(repairStatus) {
-        await refreshDeviceMap();
-        let path = '/api/my/repairs?page=1&size=500';
-        if (repairStatus !== undefined && repairStatus !== null) path += `&repairStatus=${repairStatus}`;
-        const data = await request('GET', path);
-        return (data.records || []).map(r => {
-            const m = mapRepair(r);
-            m.user_name = getLoggedUser().realName;
-            return m;
-        });
-    },
-
-    loadCategories,
-    formatDateTime,
-    deviceStatusText,
-    deviceStatusCode,
-    repairStatusText,
-    repairStatusCode,
-    applyStatusText,
-    recordStatusText
+    async resetUserPassword(id) {
+        return request('/api/users', { method: 'PUT', body: JSON.stringify({ id, password: '123456' }) });
+    }
 };
-
-async function handleApiError(err) {
-    alert(err.message || '操作失败');
-}
