@@ -12,11 +12,11 @@ import java.time.LocalDateTime;
 public class BorrowApply {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private Long userId;
     private Long deviceId;
+    private Long userId;
     private String applyReason;
-    private LocalDateTime applyTime;
     private LocalDateTime expectedReturnTime;
+    private LocalDateTime applyTime;
     private Integer status;
     private Long approveUserId;
     private LocalDateTime approveTime;

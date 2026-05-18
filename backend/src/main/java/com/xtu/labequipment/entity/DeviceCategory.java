@@ -12,8 +12,7 @@ import java.time.LocalDateTime;
 public class DeviceCategory {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private String categoryName;
+    private String name;
     private String description;
     private LocalDateTime createTime;
-    private LocalDateTime updateTime;
 }

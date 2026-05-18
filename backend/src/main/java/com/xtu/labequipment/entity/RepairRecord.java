@@ -15,8 +15,9 @@ public class RepairRecord {
     private Long deviceId;
     private Long userId;
     private String faultDesc;
-    private Integer repairStatus;
-    private String repairResult;
     private LocalDateTime reportTime;
-    private LocalDateTime finishTime;
+    private Integer status;
+    private Long handleUserId;
+    private LocalDateTime handleTime;
+    private String handleResult;
 }

@@ -18,5 +18,6 @@ public class BorrowRecord {
     private LocalDateTime borrowTime;
     private LocalDateTime returnTime;
     private Integer status;
+    private Integer isOverdue;
     private String remark;
 }

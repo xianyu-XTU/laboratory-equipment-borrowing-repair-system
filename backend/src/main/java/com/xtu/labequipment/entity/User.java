@@ -20,4 +20,5 @@ public class User {
     private Long roleId;
     private Integer status;
     private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }

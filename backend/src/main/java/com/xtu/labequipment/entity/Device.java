@@ -13,14 +13,14 @@ import java.time.LocalDateTime;
 public class Device {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private String deviceNo;
-    private String deviceName;
     private Long categoryId;
+    private String deviceNo;
+    private String name;
     private String model;
     private String location;
-    private LocalDate purchaseDate;
     private Integer status;
-    private String description;
+    private LocalDate purchaseDate;
+    private String remark;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }
