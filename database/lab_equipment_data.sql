@@ -1,190 +1,191 @@
--- ============================================
--- 实验室设备管理系统 - 大量测试数据
--- 总数据量：约 350-400 条
--- ============================================
+USE lab_equipment;
 
-SET FOREIGN_KEY_CHECKS = 0;
+-- 1. 追加缺失角色
+INSERT INTO role (role_code, role_name)
+SELECT 'STUDENT', '学生'
+WHERE NOT EXISTS (SELECT 1 FROM role WHERE role_code = 'STUDENT');
+INSERT INTO role (role_code, role_name)
+SELECT 'LAB_ADMIN', '实验员'
+WHERE NOT EXISTS (SELECT 1 FROM role WHERE role_code = 'LAB_ADMIN');
+INSERT INTO role (role_code, role_name)
+SELECT 'ADMIN', '管理员'
+WHERE NOT EXISTS (SELECT 1 FROM role WHERE role_code = 'ADMIN');
+INSERT INTO role (role_code, role_name)
+SELECT 'TEACHER', '教师'
+WHERE NOT EXISTS (SELECT 1 FROM role WHERE role_code = 'TEACHER');
+INSERT INTO role (role_code, role_name)
+SELECT 'DEPARTMENT_HEAD', '系主任'
+WHERE NOT EXISTS (SELECT 1 FROM role WHERE role_code = 'DEPARTMENT_HEAD');
 
-TRUNCATE TABLE borrow_record;
-TRUNCATE TABLE borrow_apply;
-TRUNCATE TABLE repair_record;
-TRUNCATE TABLE notice;
-TRUNCATE TABLE device;
-TRUNCATE TABLE device_category;
-TRUNCATE TABLE user;
-TRUNCATE TABLE role;
+-- 2. 追加用户
+INSERT IGNORE INTO `user` (username, password, real_name, phone, email, role_id, status) VALUES
+('student001', '123456', '李明', '13800000001', 'liming@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student002', '123456', '王红', '13800000002', 'wanghong@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student003', '123456', '张强', '13800000003', 'zhangqiang@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student004', '123456', '刘丽', '13800000004', 'liuli@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student005', '123456', '陈晨', '13800000005', 'chenchen@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student006', '123456', '赵磊', '13800000006', 'zhaolei@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student007', '123456', '周婷', '13800000007', 'zhouting@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student008', '123456', '吴迪', '13800000008', 'wudi@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student009', '123456', '郑爽', '13800000009', 'zhengshuang@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student010', '123456', '孙阳', '13800000010', 'sunyang@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student011', '123456', '林欣', '13800000011', 'linxin@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student012', '123456', '郭峰', '13800000012', 'guofeng@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student013', '123456', '唐雅', '13800000013', 'tangya@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student014', '123456', '沈浩', '13800000014', 'shenhao@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student015', '123456', '宋阳', '13800000015', 'songyang@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student016', '123456', '韩梅', '13800000016', 'hanmei@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student017', '123456', '彭博', '13800000017', 'pengbo@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student018', '123456', '陆瑶', '13800000018', 'luyao@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student019', '123456', '苏哲', '13800000019', 'suzhe@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('student020', '123456', '蔡琴', '13800000020', 'caiqin@school.com', (SELECT id FROM role WHERE role_code = 'STUDENT' LIMIT 1), 1),
+('teacher001', '123456', '王建国', '13900000001', 'wangjg@school.com', (SELECT id FROM role WHERE role_code = 'TEACHER' LIMIT 1), 1),
+('teacher002', '123456', '李芳', '13900000002', 'lifang@school.com', (SELECT id FROM role WHERE role_code = 'TEACHER' LIMIT 1), 1),
+('teacher003', '123456', '张明远', '13900000003', 'zhangmy@school.com', (SELECT id FROM role WHERE role_code = 'TEACHER' LIMIT 1), 1),
+('teacher004', '123456', '刘德华', '13900000004', 'liudh@school.com', (SELECT id FROM role WHERE role_code = 'TEACHER' LIMIT 1), 1),
+('teacher005', '123456', '陈思思', '13900000005', 'chenss@school.com', (SELECT id FROM role WHERE role_code = 'TEACHER' LIMIT 1), 1),
+('teacher006', '123456', '赵本山', '13900000006', 'zhaobs@school.com', (SELECT id FROM role WHERE role_code = 'TEACHER' LIMIT 1), 1),
+('teacher007', '123456', '周杰伦', '13900000007', 'zhoujl@school.com', (SELECT id FROM role WHERE role_code = 'TEACHER' LIMIT 1), 1),
+('teacher008', '123456', '吴彦祖', '13900000008', 'wu yz@school.com', (SELECT id FROM role WHERE role_code = 'TEACHER' LIMIT 1), 1),
+('teacher009', '123456', '郑伊健', '13900000009', 'zhengyj@school.com', (SELECT id FROM role WHERE role_code = 'TEACHER' LIMIT 1), 1),
+('teacher010', '123456', '孙俪', '13900000010', 'sunli@school.com', (SELECT id FROM role WHERE role_code = 'TEACHER' LIMIT 1), 1),
+('lab001', '123456', '张工', '13700000001', 'zhanggong@lab.com', (SELECT id FROM role WHERE role_code = 'LAB_ADMIN' LIMIT 1), 1),
+('lab002', '123456', '李工', '13700000002', 'ligong@lab.com', (SELECT id FROM role WHERE role_code = 'LAB_ADMIN' LIMIT 1), 1),
+('lab003', '123456', '王工', '13700000003', 'wanggong@lab.com', (SELECT id FROM role WHERE role_code = 'LAB_ADMIN' LIMIT 1), 1),
+('lab004', '123456', '赵工', '13700000004', 'zhaogong@lab.com', (SELECT id FROM role WHERE role_code = 'LAB_ADMIN' LIMIT 1), 1),
+('lab005', '123456', '刘工', '13700000005', 'liugong@lab.com', (SELECT id FROM role WHERE role_code = 'LAB_ADMIN' LIMIT 1), 1),
+('admin001', '123456', '超级管理员', '13600000001', 'admin@lab.com', (SELECT id FROM role WHERE role_code = 'ADMIN' LIMIT 1), 1),
+('dept001', '123456', '张院长', '13500000001', 'zhangdean@school.com', (SELECT id FROM role WHERE role_code = 'DEPARTMENT_HEAD' LIMIT 1), 1),
+('dept002', '123456', '李院长', '13500000002', 'lidean@school.com', (SELECT id FROM role WHERE role_code = 'DEPARTMENT_HEAD' LIMIT 1), 1);
 
-SET FOREIGN_KEY_CHECKS = 1;
+-- 3. 追加设备分类
+INSERT INTO device_category (name, description)
+SELECT '示波器类', '数字/模拟示波器，用于信号测量'
+WHERE NOT EXISTS (SELECT 1 FROM device_category WHERE name = '示波器类');
+INSERT INTO device_category (name, description)
+SELECT '万用表类', '数字万用表，电压电流电阻测量'
+WHERE NOT EXISTS (SELECT 1 FROM device_category WHERE name = '万用表类');
+INSERT INTO device_category (name, description)
+SELECT '信号源类', '函数信号发生器、任意波形发生器'
+WHERE NOT EXISTS (SELECT 1 FROM device_category WHERE name = '信号源类');
+INSERT INTO device_category (name, description)
+SELECT '电源类', '直流稳压电源、可编程电源'
+WHERE NOT EXISTS (SELECT 1 FROM device_category WHERE name = '电源类');
+INSERT INTO device_category (name, description)
+SELECT '计算机类', '台式机、笔记本、工作站'
+WHERE NOT EXISTS (SELECT 1 FROM device_category WHERE name = '计算机类');
+INSERT INTO device_category (name, description)
+SELECT '网络设备类', '路由器、交换机、服务器'
+WHERE NOT EXISTS (SELECT 1 FROM device_category WHERE name = '网络设备类');
+INSERT INTO device_category (name, description)
+SELECT '投影设备类', '投影仪、幕布、音响'
+WHERE NOT EXISTS (SELECT 1 FROM device_category WHERE name = '投影设备类');
+INSERT INTO device_category (name, description)
+SELECT '测量仪器类', '电子天平、温湿度计、噪声仪'
+WHERE NOT EXISTS (SELECT 1 FROM device_category WHERE name = '测量仪器类');
+INSERT INTO device_category (name, description)
+SELECT '通信设备类', '频谱仪、网络分析仪'
+WHERE NOT EXISTS (SELECT 1 FROM device_category WHERE name = '通信设备类');
+INSERT INTO device_category (name, description)
+SELECT '实验平台类', '开发板、实验箱、套件'
+WHERE NOT EXISTS (SELECT 1 FROM device_category WHERE name = '实验平台类');
+INSERT INTO device_category (name, description)
+SELECT '存储设备类', '硬盘、U盘、NAS'
+WHERE NOT EXISTS (SELECT 1 FROM device_category WHERE name = '存储设备类');
+INSERT INTO device_category (name, description)
+SELECT '外设类', '键盘、鼠标、显示器'
+WHERE NOT EXISTS (SELECT 1 FROM device_category WHERE name = '外设类');
 
--- ============================================
--- 1. 角色表 (5条)
--- ============================================
-INSERT INTO role (role_name, role_code) VALUES
-('学生', 'STUDENT'),
-('实验员', 'LAB_ADMIN'),
-('管理员', 'ADMIN'),
-('教师', 'TEACHER'),
-('系主任', 'DEPARTMENT_HEAD');
+-- 4. 追加你上一条消息里的 3 条设备
+INSERT IGNORE INTO device(category_id, device_no, name, model, location, status, purchase_date, remark) VALUES
+(2, 'GEN-001', 'Signal Generator', 'FY6900', 'Lab B203', 1, '2024-01-15', 'Good'),
+(2, 'PWR-001', 'DC Power Supply', 'DP832', 'Lab B204', 1, '2024-02-21', 'Good'),
+(1, 'TAB-001', 'Tablet', 'iPad', 'Lab A103', 1, '2024-03-11', 'Good');
 
--- ============================================
--- 2. 用户表 (50条)
--- ============================================
-INSERT INTO user (username, password, real_name, phone, email, role_id, status) VALUES
-('student001', '123456', '李明', '13800000001', 'liming@school.com', 1, 1),
-('student002', '123456', '王红', '13800000002', 'wanghong@school.com', 1, 1),
-('student003', '123456', '张强', '13800000003', 'zhangqiang@school.com', 1, 1),
-('student004', '123456', '刘丽', '13800000004', 'liuli@school.com', 1, 1),
-('student005', '123456', '陈晨', '13800000005', 'chenchen@school.com', 1, 1),
-('student006', '123456', '赵磊', '13800000006', 'zhaolei@school.com', 1, 1),
-('student007', '123456', '周婷', '13800000007', 'zhouting@school.com', 1, 1),
-('student008', '123456', '吴迪', '13800000008', 'wudi@school.com', 1, 1),
-('student009', '123456', '郑爽', '13800000009', 'zhengshuang@school.com', 1, 1),
-('student010', '123456', '孙阳', '13800000010', 'sunyang@school.com', 1, 1),
-('student011', '123456', '林欣', '13800000011', 'linxin@school.com', 1, 1),
-('student012', '123456', '郭峰', '13800000012', 'guofeng@school.com', 1, 1),
-('student013', '123456', '唐雅', '13800000013', 'tangya@school.com', 1, 1),
-('student014', '123456', '沈浩', '13800000014', 'shenhao@school.com', 1, 1),
-('student015', '123456', '宋阳', '13800000015', 'songyang@school.com', 1, 1),
-('student016', '123456', '韩梅', '13800000016', 'hanmei@school.com', 1, 1),
-('student017', '123456', '彭博', '13800000017', 'pengbo@school.com', 1, 1),
-('student018', '123456', '陆瑶', '13800000018', 'luyao@school.com', 1, 1),
-('student019', '123456', '苏哲', '13800000019', 'suzhe@school.com', 1, 1),
-('student020', '123456', '蔡琴', '13800000020', 'caiqin@school.com', 1, 1),
-('teacher001', '123456', '王建国', '13900000001', 'wangjg@school.com', 4, 1),
-('teacher002', '123456', '李芳', '13900000002', 'lifang@school.com', 4, 1),
-('teacher003', '123456', '张明远', '13900000003', 'zhangmy@school.com', 4, 1),
-('teacher004', '123456', '刘德华', '13900000004', 'liudh@school.com', 4, 1),
-('teacher005', '123456', '陈思思', '13900000005', 'chenss@school.com', 4, 1),
-('teacher006', '123456', '赵本山', '13900000006', 'zhaobs@school.com', 4, 1),
-('teacher007', '123456', '周杰伦', '13900000007', 'zhoujl@school.com', 4, 1),
-('teacher008', '123456', '吴彦祖', '13900000008', 'wu yz@school.com', 4, 1),
-('teacher009', '123456', '郑伊健', '13900000009', 'zhengyj@school.com', 4, 1),
-('teacher010', '123456', '孙俪', '13900000010', 'sunli@school.com', 4, 1),
-('lab001', '123456', '张工', '13700000001', 'zhanggong@lab.com', 2, 1),
-('lab002', '123456', '李工', '13700000002', 'ligong@lab.com', 2, 1),
-('lab003', '123456', '王工', '13700000003', 'wanggong@lab.com', 2, 1),
-('lab004', '123456', '赵工', '13700000004', 'zhaogong@lab.com', 2, 1),
-('lab005', '123456', '刘工', '13700000005', 'liugong@lab.com', 2, 1),
-('admin001', '123456', '超级管理员', '13600000001', 'admin@lab.com', 3, 1),
-('dept001', '123456', '张院长', '13500000001', 'zhangdean@school.com', 5, 1),
-('dept002', '123456', '李院长', '13500000002', 'lidean@school.com', 5, 1);
+-- 5. 追加 80 条设备
+INSERT IGNORE INTO device (device_no, name, category_id, model, location, purchase_date, status, remark) VALUES
+('DSO-001', '数字示波器', (SELECT id FROM device_category WHERE name = '示波器类' LIMIT 1), 'Rigol DS1054Z', 'A-101', '2023-01-15', 1, '50MHz 4通道'),
+('DSO-002', '数字示波器', (SELECT id FROM device_category WHERE name = '示波器类' LIMIT 1), 'Rigol DS1054Z', 'A-101', '2023-01-15', 1, '50MHz 4通道'),
+('DSO-003', '数字示波器', (SELECT id FROM device_category WHERE name = '示波器类' LIMIT 1), 'Rigol DS1054Z', 'A-101', '2023-01-15', 2, '50MHz 4通道'),
+('DSO-004', '数字示波器', (SELECT id FROM device_category WHERE name = '示波器类' LIMIT 1), 'Rigol DS1054Z', 'A-101', '2023-01-15', 1, '50MHz 4通道'),
+('DSO-005', '数字示波器', (SELECT id FROM device_category WHERE name = '示波器类' LIMIT 1), 'Rigol DS1054Z', 'A-101', '2023-01-15', 3, '50MHz 4通道'),
+('DSO-006', '数字示波器', (SELECT id FROM device_category WHERE name = '示波器类' LIMIT 1), 'Tektronix TBS1102C', 'A-102', '2023-03-20', 1, '100MHz 2通道'),
+('DSO-007', '数字示波器', (SELECT id FROM device_category WHERE name = '示波器类' LIMIT 1), 'Tektronix TBS1102C', 'A-102', '2023-03-20', 1, '100MHz 2通道'),
+('DSO-008', '数字示波器', (SELECT id FROM device_category WHERE name = '示波器类' LIMIT 1), 'Tektronix TBS1102C', 'A-102', '2023-03-20', 2, '100MHz 2通道'),
+('DSO-009', '手持示波器', (SELECT id FROM device_category WHERE name = '示波器类' LIMIT 1), 'Fluke 123B', 'A-103', '2023-05-10', 1, '便携式'),
+('DSO-010', '手持示波器', (SELECT id FROM device_category WHERE name = '示波器类' LIMIT 1), 'Fluke 123B', 'A-103', '2023-05-10', 4, '便携式-待报废'),
+('DMM-001', '数字万用表', (SELECT id FROM device_category WHERE name = '万用表类' LIMIT 1), 'Fluke 17B+', 'A-201', '2023-02-01', 1, '高精度'),
+('DMM-002', '数字万用表', (SELECT id FROM device_category WHERE name = '万用表类' LIMIT 1), 'Fluke 17B+', 'A-201', '2023-02-01', 1, '高精度'),
+('DMM-003', '数字万用表', (SELECT id FROM device_category WHERE name = '万用表类' LIMIT 1), 'Fluke 17B+', 'A-201', '2023-02-01', 2, '高精度'),
+('DMM-004', '数字万用表', (SELECT id FROM device_category WHERE name = '万用表类' LIMIT 1), 'Fluke 17B+', 'A-201', '2023-02-01', 1, '高精度'),
+('DMM-005', '数字万用表', (SELECT id FROM device_category WHERE name = '万用表类' LIMIT 1), 'Fluke 17B+', 'A-201', '2023-02-01', 3, '高精度-维修'),
+('DMM-006', '数字万用表', (SELECT id FROM device_category WHERE name = '万用表类' LIMIT 1), 'UNI-T UT61E', 'A-202', '2023-04-15', 1, '高精度'),
+('DMM-007', '数字万用表', (SELECT id FROM device_category WHERE name = '万用表类' LIMIT 1), 'UNI-T UT61E', 'A-202', '2023-04-15', 1, '高精度'),
+('DMM-008', '数字万用表', (SELECT id FROM device_category WHERE name = '万用表类' LIMIT 1), 'UNI-T UT61E', 'A-202', '2023-04-15', 2, '高精度'),
+('DMM-009', '台式万用表', (SELECT id FROM device_category WHERE name = '万用表类' LIMIT 1), 'Rigol DM3068', 'A-203', '2023-06-01', 1, '6位半'),
+('DMM-010', '台式万用表', (SELECT id FROM device_category WHERE name = '万用表类' LIMIT 1), 'Rigol DM3068', 'A-203', '2023-06-01', 1, '6位半'),
+('SG-001', '函数信号发生器', (SELECT id FROM device_category WHERE name = '信号源类' LIMIT 1), 'Rigol DG1022Z', 'B-101', '2023-02-10', 1, '双通道'),
+('SG-002', '函数信号发生器', (SELECT id FROM device_category WHERE name = '信号源类' LIMIT 1), 'Rigol DG1022Z', 'B-101', '2023-02-10', 1, '双通道'),
+('SG-003', '函数信号发生器', (SELECT id FROM device_category WHERE name = '信号源类' LIMIT 1), 'Rigol DG1022Z', 'B-101', '2023-02-10', 2, '双通道'),
+('SG-004', '函数信号发生器', (SELECT id FROM device_category WHERE name = '信号源类' LIMIT 1), 'Siglent SDG1032X', 'B-102', '2023-05-20', 1, '30MHz'),
+('SG-005', '函数信号发生器', (SELECT id FROM device_category WHERE name = '信号源类' LIMIT 1), 'Siglent SDG1032X', 'B-102', '2023-05-20', 1, '30MHz'),
+('SG-006', '射频信号源', (SELECT id FROM device_category WHERE name = '信号源类' LIMIT 1), 'Siglent SSG3021X', 'B-103', '2023-08-01', 1, '3.2GHz'),
+('SG-007', '射频信号源', (SELECT id FROM device_category WHERE name = '信号源类' LIMIT 1), 'Siglent SSG3021X', 'B-103', '2023-08-01', 3, '3.2GHz-维修'),
+('SG-008', '任意波形发生器', (SELECT id FROM device_category WHERE name = '信号源类' LIMIT 1), 'Tektronix AFG1022', 'B-104', '2023-09-15', 1, '25MHz'),
+('SG-009', '任意波形发生器', (SELECT id FROM device_category WHERE name = '信号源类' LIMIT 1), 'Tektronix AFG1022', 'B-104', '2023-09-15', 1, '25MHz'),
+('SG-010', '任意波形发生器', (SELECT id FROM device_category WHERE name = '信号源类' LIMIT 1), 'Tektronix AFG1022', 'B-104', '2023-09-15', 2, '25MHz'),
+('PS-001', '直流稳压电源', (SELECT id FROM device_category WHERE name = '电源类' LIMIT 1), 'Rigol DP832', 'C-101', '2023-03-01', 1, '三通道'),
+('PS-002', '直流稳压电源', (SELECT id FROM device_category WHERE name = '电源类' LIMIT 1), 'Rigol DP832', 'C-101', '2023-03-01', 1, '三通道'),
+('PS-003', '直流稳压电源', (SELECT id FROM device_category WHERE name = '电源类' LIMIT 1), 'Rigol DP832', 'C-101', '2023-03-01', 2, '三通道'),
+('PS-004', '直流稳压电源', (SELECT id FROM device_category WHERE name = '电源类' LIMIT 1), 'ATTEN APS3005S', 'C-102', '2023-04-10', 1, '单通道'),
+('PS-005', '直流稳压电源', (SELECT id FROM device_category WHERE name = '电源类' LIMIT 1), 'ATTEN APS3005S', 'C-102', '2023-04-10', 1, '单通道'),
+('PS-006', '直流稳压电源', (SELECT id FROM device_category WHERE name = '电源类' LIMIT 1), 'ATTEN APS3005S', 'C-102', '2023-04-10', 1, '单通道'),
+('PS-007', '可编程电源', (SELECT id FROM device_category WHERE name = '电源类' LIMIT 1), 'ITECH IT6720', 'C-103', '2023-07-01', 1, '60V/5A'),
+('PS-008', '可编程电源', (SELECT id FROM device_category WHERE name = '电源类' LIMIT 1), 'ITECH IT6720', 'C-103', '2023-07-01', 4, '60V/5A-报废'),
+('PS-009', '可编程电源', (SELECT id FROM device_category WHERE name = '电源类' LIMIT 1), 'ITECH IT6721', 'C-103', '2023-07-01', 1, '60V/8A'),
+('PS-010', '可编程电源', (SELECT id FROM device_category WHERE name = '电源类' LIMIT 1), 'ITECH IT6721', 'C-103', '2023-07-01', 2, '60V/8A'),
+('PC-001', '台式计算机', (SELECT id FROM device_category WHERE name = '计算机类' LIMIT 1), 'Lenovo M950t', 'D-101', '2023-01-10', 1, 'i7/16G/512G'),
+('PC-002', '台式计算机', (SELECT id FROM device_category WHERE name = '计算机类' LIMIT 1), 'Lenovo M950t', 'D-101', '2023-01-10', 1, 'i7/16G/512G'),
+('PC-003', '台式计算机', (SELECT id FROM device_category WHERE name = '计算机类' LIMIT 1), 'Lenovo M950t', 'D-101', '2023-01-10', 2, 'i7/16G/512G'),
+('PC-004', '台式计算机', (SELECT id FROM device_category WHERE name = '计算机类' LIMIT 1), 'Lenovo M950t', 'D-101', '2023-01-10', 1, 'i7/16G/512G'),
+('PC-005', '台式计算机', (SELECT id FROM device_category WHERE name = '计算机类' LIMIT 1), 'Lenovo M950t', 'D-101', '2023-01-10', 3, 'i7/16G/512G'),
+('PC-006', '笔记本电脑', (SELECT id FROM device_category WHERE name = '计算机类' LIMIT 1), 'ThinkPad X1 Carbon', 'D-102', '2023-06-15', 1, 'i7/16G/1T'),
+('PC-007', '笔记本电脑', (SELECT id FROM device_category WHERE name = '计算机类' LIMIT 1), 'ThinkPad X1 Carbon', 'D-102', '2023-06-15', 2, 'i7/16G/1T'),
+('PC-008', '笔记本电脑', (SELECT id FROM device_category WHERE name = '计算机类' LIMIT 1), 'MacBook Pro', 'D-102', '2023-09-20', 1, 'M2/16G/512G'),
+('PC-009', '工作站', (SELECT id FROM device_category WHERE name = '计算机类' LIMIT 1), 'Dell Precision 3660', 'D-103', '2023-11-01', 1, 'i9/32G/1T'),
+('PC-010', '工作站', (SELECT id FROM device_category WHERE name = '计算机类' LIMIT 1), 'Dell Precision 3660', 'D-103', '2023-11-01', 1, 'i9/32G/1T'),
+('NW-001', '千兆交换机', (SELECT id FROM device_category WHERE name = '网络设备类' LIMIT 1), 'Huawei S5735S', 'E-101', '2023-04-01', 1, '48口'),
+('NW-002', '千兆交换机', (SELECT id FROM device_category WHERE name = '网络设备类' LIMIT 1), 'Huawei S5735S', 'E-101', '2023-04-01', 1, '48口'),
+('NW-003', '千兆交换机', (SELECT id FROM device_category WHERE name = '网络设备类' LIMIT 1), 'Huawei S5735S', 'E-101', '2023-04-01', 2, '48口'),
+('NW-004', '路由器', (SELECT id FROM device_category WHERE name = '网络设备类' LIMIT 1), 'Cisco ISR 4321', 'E-102', '2023-05-10', 1, '企业级'),
+('NW-005', '路由器', (SELECT id FROM device_category WHERE name = '网络设备类' LIMIT 1), 'Cisco ISR 4321', 'E-102', '2023-05-10', 1, '企业级'),
+('NW-006', '服务器', (SELECT id FROM device_category WHERE name = '网络设备类' LIMIT 1), 'Dell PowerEdge R750', 'E-103', '2023-07-01', 1, '机架式'),
+('NW-007', '服务器', (SELECT id FROM device_category WHERE name = '网络设备类' LIMIT 1), 'Dell PowerEdge R750', 'E-103', '2023-07-01', 2, '机架式'),
+('NW-008', '防火墙', (SELECT id FROM device_category WHERE name = '网络设备类' LIMIT 1), 'Huawei USG6300', 'E-104', '2023-08-15', 1, '企业级'),
+('NW-009', '无线AP', (SELECT id FROM device_category WHERE name = '网络设备类' LIMIT 1), 'Huawei AP7060DN', 'E-105', '2023-09-01', 1, 'WiFi6'),
+('NW-010', '无线AP', (SELECT id FROM device_category WHERE name = '网络设备类' LIMIT 1), 'Huawei AP7060DN', 'E-105', '2023-09-01', 3, 'WiFi6-维修'),
+('PJ-001', '投影仪', (SELECT id FROM device_category WHERE name = '投影设备类' LIMIT 1), 'Epson CB-695Wi', 'F-101', '2023-02-15', 1, '互动式'),
+('PJ-002', '投影仪', (SELECT id FROM device_category WHERE name = '投影设备类' LIMIT 1), 'Epson CB-695Wi', 'F-101', '2023-02-15', 2, '互动式'),
+('PJ-003', '投影仪', (SELECT id FROM device_category WHERE name = '投影设备类' LIMIT 1), 'BenQ MH733', 'F-102', '2023-05-20', 1, '4000流明'),
+('PJ-004', '投影仪', (SELECT id FROM device_category WHERE name = '投影设备类' LIMIT 1), 'BenQ MH733', 'F-102', '2023-05-20', 1, '4000流明'),
+('PJ-005', '激光投影', (SELECT id FROM device_category WHERE name = '投影设备类' LIMIT 1), 'Sony VPL-P501HZ', 'F-103', '2023-08-10', 1, '激光光源'),
+('PJ-006', '激光投影', (SELECT id FROM device_category WHERE name = '投影设备类' LIMIT 1), 'Sony VPL-P501HZ', 'F-103', '2023-08-10', 3, '激光光源-维修'),
+('PJ-007', '音响系统', (SELECT id FROM device_category WHERE name = '投影设备类' LIMIT 1), 'JBL KES8120', 'F-201', '2023-09-01', 1, '专业音响'),
+('PJ-008', '音响系统', (SELECT id FROM device_category WHERE name = '投影设备类' LIMIT 1), 'JBL KES8120', 'F-201', '2023-09-01', 1, '专业音响'),
+('PJ-009', '投影幕布', (SELECT id FROM device_category WHERE name = '投影设备类' LIMIT 1), '红叶120寸', 'F-202', '2023-03-01', 1, '电动'),
+('PJ-010', '投影幕布', (SELECT id FROM device_category WHERE name = '投影设备类' LIMIT 1), '红叶120寸', 'F-202', '2023-03-01', 2, '电动'),
+('MI-001', '电子天平', (SELECT id FROM device_category WHERE name = '测量仪器类' LIMIT 1), 'Sartorius BSA224S', 'G-101', '2023-04-01', 1, '220g/0.1mg'),
+('MI-002', '电子天平', (SELECT id FROM device_category WHERE name = '测量仪器类' LIMIT 1), 'Sartorius BSA224S', 'G-101', '2023-04-01', 2, '220g/0.1mg'),
+('MI-003', '温湿度计', (SELECT id FROM device_category WHERE name = '测量仪器类' LIMIT 1), 'Testo 608-H1', 'G-102', '2023-06-01', 1, '实验室用'),
+('MI-004', '噪声计', (SELECT id FROM device_category WHERE name = '测量仪器类' LIMIT 1), 'CEM DT-8850', 'G-102', '2023-06-01', 1, '30-130dB'),
+('MI-005', 'pH计', (SELECT id FROM device_category WHERE name = '测量仪器类' LIMIT 1), 'Mettler Toledo FE28', 'G-103', '2023-07-01', 4, 'pH计-报废'),
+('CM-001', '频谱分析仪', (SELECT id FROM device_category WHERE name = '通信设备类' LIMIT 1), 'Rigol RSA3030N', 'H-101', '2023-09-01', 1, '3.2GHz'),
+('CM-002', '频谱分析仪', (SELECT id FROM device_category WHERE name = '通信设备类' LIMIT 1), 'Rigol RSA3030N', 'H-101', '2023-09-01', 2, '3.2GHz'),
+('CM-003', '网络分析仪', (SELECT id FROM device_category WHERE name = '通信设备类' LIMIT 1), 'Siglent SNA5032A', 'H-102', '2023-10-01', 1, '3.2GHz'),
+('EP-001', 'FPGA开发板', (SELECT id FROM device_category WHERE name = '实验平台类' LIMIT 1), 'Xilinx Artix-7', 'I-101', '2023-05-01', 1, 'FPGA开发套件'),
+('EP-002', '单片机实验箱', (SELECT id FROM device_category WHERE name = '实验平台类' LIMIT 1), 'STC15实验箱', 'I-102', '2023-06-01', 2, '单片机教学');
 
--- ============================================
--- 3. 设备分类表 (12条)
--- ============================================
-INSERT INTO device_category (category_name, description) VALUES
-('示波器类', '数字/模拟示波器，用于信号测量'),
-('万用表类', '数字万用表，电压电流电阻测量'),
-('信号源类', '函数信号发生器、任意波形发生器'),
-('电源类', '直流稳压电源、可编程电源'),
-('计算机类', '台式机、笔记本、工作站'),
-('网络设备类', '路由器、交换机、服务器'),
-('投影设备类', '投影仪、幕布、音响'),
-('测量仪器类', '电子天平、温湿度计、噪声仪'),
-('通信设备类', '频谱仪、网络分析仪'),
-('实验平台类', '开发板、实验箱、套件'),
-('存储设备类', '硬盘、U盘、NAS'),
-('外设类', '键盘、鼠标、显示器');
-
--- ============================================
--- 4. 设备表 (80条)
--- ============================================
-INSERT INTO device (device_no, device_name, category_id, model, location, purchase_date, status, description) VALUES
--- 示波器类 (1-10)
-('DSO-001', '数字示波器', 1, 'Rigol DS1054Z', 'A-101', '2023-01-15', 1, '50MHz 4通道'),
-('DSO-002', '数字示波器', 1, 'Rigol DS1054Z', 'A-101', '2023-01-15', 1, '50MHz 4通道'),
-('DSO-003', '数字示波器', 1, 'Rigol DS1054Z', 'A-101', '2023-01-15', 2, '50MHz 4通道'),
-('DSO-004', '数字示波器', 1, 'Rigol DS1054Z', 'A-101', '2023-01-15', 1, '50MHz 4通道'),
-('DSO-005', '数字示波器', 1, 'Rigol DS1054Z', 'A-101', '2023-01-15', 3, '50MHz 4通道'),
-('DSO-006', '数字示波器', 1, 'Tektronix TBS1102C', 'A-102', '2023-03-20', 1, '100MHz 2通道'),
-('DSO-007', '数字示波器', 1, 'Tektronix TBS1102C', 'A-102', '2023-03-20', 1, '100MHz 2通道'),
-('DSO-008', '数字示波器', 1, 'Tektronix TBS1102C', 'A-102', '2023-03-20', 2, '100MHz 2通道'),
-('DSO-009', '手持示波器', 1, 'Fluke 123B', 'A-103', '2023-05-10', 1, '便携式'),
-('DSO-010', '手持示波器', 1, 'Fluke 123B', 'A-103', '2023-05-10', 4, '便携式-待报废'),
--- 万用表类 (11-20)
-('DMM-001', '数字万用表', 2, 'Fluke 17B+', 'A-201', '2023-02-01', 1, '高精度'),
-('DMM-002', '数字万用表', 2, 'Fluke 17B+', 'A-201', '2023-02-01', 1, '高精度'),
-('DMM-003', '数字万用表', 2, 'Fluke 17B+', 'A-201', '2023-02-01', 2, '高精度'),
-('DMM-004', '数字万用表', 2, 'Fluke 17B+', 'A-201', '2023-02-01', 1, '高精度'),
-('DMM-005', '数字万用表', 2, 'Fluke 17B+', 'A-201', '2023-02-01', 3, '高精度-维修'),
-('DMM-006', '数字万用表', 2, 'UNI-T UT61E', 'A-202', '2023-04-15', 1, '高精度'),
-('DMM-007', '数字万用表', 2, 'UNI-T UT61E', 'A-202', '2023-04-15', 1, '高精度'),
-('DMM-008', '数字万用表', 2, 'UNI-T UT61E', 'A-202', '2023-04-15', 2, '高精度'),
-('DMM-009', '台式万用表', 2, 'Rigol DM3068', 'A-203', '2023-06-01', 1, '6位半'),
-('DMM-010', '台式万用表', 2, 'Rigol DM3068', 'A-203', '2023-06-01', 1, '6位半'),
--- 信号源类 (21-30)
-('SG-001', '函数信号发生器', 3, 'Rigol DG1022Z', 'B-101', '2023-02-10', 1, '双通道'),
-('SG-002', '函数信号发生器', 3, 'Rigol DG1022Z', 'B-101', '2023-02-10', 1, '双通道'),
-('SG-003', '函数信号发生器', 3, 'Rigol DG1022Z', 'B-101', '2023-02-10', 2, '双通道'),
-('SG-004', '函数信号发生器', 3, 'Siglent SDG1032X', 'B-102', '2023-05-20', 1, '30MHz'),
-('SG-005', '函数信号发生器', 3, 'Siglent SDG1032X', 'B-102', '2023-05-20', 1, '30MHz'),
-('SG-006', '射频信号源', 3, 'Siglent SSG3021X', 'B-103', '2023-08-01', 1, '3.2GHz'),
-('SG-007', '射频信号源', 3, 'Siglent SSG3021X', 'B-103', '2023-08-01', 3, '3.2GHz-维修'),
-('SG-008', '任意波形发生器', 3, 'Tektronix AFG1022', 'B-104', '2023-09-15', 1, '25MHz'),
-('SG-009', '任意波形发生器', 3, 'Tektronix AFG1022', 'B-104', '2023-09-15', 1, '25MHz'),
-('SG-010', '任意波形发生器', 3, 'Tektronix AFG1022', 'B-104', '2023-09-15', 2, '25MHz'),
--- 电源类 (31-40)
-('PS-001', '直流稳压电源', 4, 'Rigol DP832', 'C-101', '2023-03-01', 1, '三通道'),
-('PS-002', '直流稳压电源', 4, 'Rigol DP832', 'C-101', '2023-03-01', 1, '三通道'),
-('PS-003', '直流稳压电源', 4, 'Rigol DP832', 'C-101', '2023-03-01', 2, '三通道'),
-('PS-004', '直流稳压电源', 4, 'ATTEN APS3005S', 'C-102', '2023-04-10', 1, '单通道'),
-('PS-005', '直流稳压电源', 4, 'ATTEN APS3005S', 'C-102', '2023-04-10', 1, '单通道'),
-('PS-006', '直流稳压电源', 4, 'ATTEN APS3005S', 'C-102', '2023-04-10', 1, '单通道'),
-('PS-007', '可编程电源', 4, 'ITECH IT6720', 'C-103', '2023-07-01', 1, '60V/5A'),
-('PS-008', '可编程电源', 4, 'ITECH IT6720', 'C-103', '2023-07-01', 4, '60V/5A-报废'),
-('PS-009', '可编程电源', 4, 'ITECH IT6721', 'C-103', '2023-07-01', 1, '60V/8A'),
-('PS-010', '可编程电源', 4, 'ITECH IT6721', 'C-103', '2023-07-01', 2, '60V/8A'),
--- 计算机类 (41-50)
-('PC-001', '台式计算机', 5, 'Lenovo M950t', 'D-101', '2023-01-10', 1, 'i7/16G/512G'),
-('PC-002', '台式计算机', 5, 'Lenovo M950t', 'D-101', '2023-01-10', 1, 'i7/16G/512G'),
-('PC-003', '台式计算机', 5, 'Lenovo M950t', 'D-101', '2023-01-10', 2, 'i7/16G/512G'),
-('PC-004', '台式计算机', 5, 'Lenovo M950t', 'D-101', '2023-01-10', 1, 'i7/16G/512G'),
-('PC-005', '台式计算机', 5, 'Lenovo M950t', 'D-101', '2023-01-10', 3, 'i7/16G/512G'),
-('PC-006', '笔记本电脑', 5, 'ThinkPad X1 Carbon', 'D-102', '2023-06-15', 1, 'i7/16G/1T'),
-('PC-007', '笔记本电脑', 5, 'ThinkPad X1 Carbon', 'D-102', '2023-06-15', 2, 'i7/16G/1T'),
-('PC-008', '笔记本电脑', 5, 'MacBook Pro', 'D-102', '2023-09-20', 1, 'M2/16G/512G'),
-('PC-009', '工作站', 5, 'Dell Precision 3660', 'D-103', '2023-11-01', 1, 'i9/32G/1T'),
-('PC-010', '工作站', 5, 'Dell Precision 3660', 'D-103', '2023-11-01', 1, 'i9/32G/1T'),
--- 网络设备类 (51-60)
-('NW-001', '千兆交换机', 6, 'Huawei S5735S', 'E-101', '2023-04-01', 1, '48口'),
-('NW-002', '千兆交换机', 6, 'Huawei S5735S', 'E-101', '2023-04-01', 1, '48口'),
-('NW-003', '千兆交换机', 6, 'Huawei S5735S', 'E-101', '2023-04-01', 2, '48口'),
-('NW-004', '路由器', 6, 'Cisco ISR 4321', 'E-102', '2023-05-10', 1, '企业级'),
-('NW-005', '路由器', 6, 'Cisco ISR 4321', 'E-102', '2023-05-10', 1, '企业级'),
-('NW-006', '服务器', 6, 'Dell PowerEdge R750', 'E-103', '2023-07-01', 1, '机架式'),
-('NW-007', '服务器', 6, 'Dell PowerEdge R750', 'E-103', '2023-07-01', 2, '机架式'),
-('NW-008', '防火墙', 6, 'Huawei USG6300', 'E-104', '2023-08-15', 1, '企业级'),
-('NW-009', '无线AP', 6, 'Huawei AP7060DN', 'E-105', '2023-09-01', 1, 'WiFi6'),
-('NW-010', '无线AP', 6, 'Huawei AP7060DN', 'E-105', '2023-09-01', 3, 'WiFi6-维修'),
--- 投影设备类 (61-70)
-('PJ-001', '投影仪', 7, 'Epson CB-695Wi', 'F-101', '2023-02-15', 1, '互动式'),
-('PJ-002', '投影仪', 7, 'Epson CB-695Wi', 'F-101', '2023-02-15', 2, '互动式'),
-('PJ-003', '投影仪', 7, 'BenQ MH733', 'F-102', '2023-05-20', 1, '4000流明'),
-('PJ-004', '投影仪', 7, 'BenQ MH733', 'F-102', '2023-05-20', 1, '4000流明'),
-('PJ-005', '激光投影', 7, 'Sony VPL-P501HZ', 'F-103', '2023-08-10', 1, '激光光源'),
-('PJ-006', '激光投影', 7, 'Sony VPL-P501HZ', 'F-103', '2023-08-10', 3, '激光光源-维修'),
-('PJ-007', '音响系统', 7, 'JBL KES8120', 'F-201', '2023-09-01', 1, '专业音响'),
-('PJ-008', '音响系统', 7, 'JBL KES8120', 'F-201', '2023-09-01', 1, '专业音响'),
-('PJ-009', '投影幕布', 7, '红叶120寸', 'F-202', '2023-03-01', 1, '电动'),
-('PJ-010', '投影幕布', 7, '红叶120寸', 'F-202', '2023-03-01', 2, '电动'),
--- 测量仪器类 (71-75)
-('MI-001', '电子天平', 8, 'Sartorius BSA224S', 'G-101', '2023-04-01', 1, '220g/0.1mg'),
-('MI-002', '电子天平', 8, 'Sartorius BSA224S', 'G-101', '2023-04-01', 2, '220g/0.1mg'),
-('MI-003', '温湿度计', 8, 'Testo 608-H1', 'G-102', '2023-06-01', 1, '实验室用'),
-('MI-004', '噪声计', 8, 'CEM DT-8850', 'G-102', '2023-06-01', 1, '30-130dB'),
-('MI-005', 'pH计', 8, 'Mettler Toledo FE28', 'G-103', '2023-07-01', 4, 'pH计-报废'),
--- 通信设备类 (76-78)
-('CM-001', '频谱分析仪', 9, 'Rigol RSA3030N', 'H-101', '2023-09-01', 1, '3.2GHz'),
-('CM-002', '频谱分析仪', 9, 'Rigol RSA3030N', 'H-101', '2023-09-01', 2, '3.2GHz'),
-('CM-003', '网络分析仪', 9, 'Siglent SNA5032A', 'H-102', '2023-10-01', 1, '3.2GHz'),
--- 实验平台类 (79-80)
-('EP-001', 'FPGA开发板', 10, 'Xilinx Artix-7', 'I-101', '2023-05-01', 1, 'FPGA开发套件'),
-('EP-002', '单片机实验箱', 10, 'STC15实验箱', 'I-102', '2023-06-01', 2, '单片机教学');
-
--- ============================================
--- 5. 借用申请表 (120条)
--- ============================================
--- 生成最近3个月的借用申请记录
+-- 6. 生成借用申请记录
 INSERT INTO borrow_apply (user_id, device_id, apply_reason, expected_return_time, status, approve_user_id, approve_time, approve_remark)
 SELECT 
     u.id,
@@ -202,17 +203,17 @@ SELECT
         WHEN 1 THEN 1
         ELSE 2
     END,
-    CASE WHEN RAND() > 0.3 THEN 1 ELSE NULL END,
+    CASE WHEN RAND() > 0.3 THEN (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1) ELSE NULL END,
     CASE WHEN RAND() > 0.3 THEN NOW() - INTERVAL FLOOR(RAND() * 10) DAY ELSE NULL END,
     CASE WHEN RAND() > 0.7 THEN '请按时归还并爱护设备' ELSE NULL END
-FROM user u, device d
-WHERE u.role_id IN (1, 4)  -- 学生和教师
-  AND d.status IN (1, 2)    -- 可借或已借出
+FROM `user` u, device d
+WHERE u.role_id IN (
+    SELECT id FROM role WHERE role_code IN ('STUDENT', 'TEACHER')
+)
+  AND d.status IN (1, 2)
 LIMIT 120;
 
--- ============================================
--- 6. 借用记录表 (100条)
--- ============================================
+-- 7. 生成借用记录
 INSERT INTO borrow_record (apply_id, device_id, user_id, borrow_time, return_time, status, remark)
 SELECT 
     a.id,
@@ -230,10 +231,8 @@ FROM borrow_apply a
 WHERE a.status = 1
 LIMIT 100;
 
--- ============================================
--- 7. 报修记录表 (60条)
--- ============================================
-INSERT INTO repair_record (device_id, user_id, fault_desc, repair_status, repair_result, report_time, finish_time)
+-- 8. 生成报修记录（原表字段为 status/handle_result/handle_time，不是 repair_status/repair_result/finish_time）
+INSERT INTO repair_record (device_id, user_id, fault_desc, status, handle_result, report_time, handle_time)
 SELECT 
     d.id,
     u.id,
@@ -249,16 +248,16 @@ SELECT
     CASE WHEN RAND() > 0.6 THEN '维修完成，设备恢复正常' ELSE NULL END,
     DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 60) DAY),
     CASE WHEN RAND() > 0.5 THEN DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY) ELSE NULL END
-FROM device d, user u
-WHERE d.status IN (3, 1, 2)  -- 维修中、可借、已借出都可能报修
-  AND u.role_id IN (1, 2, 4)  -- 学生、实验员、教师
+FROM device d, `user` u
+WHERE d.status IN (3, 1, 2)
+  AND u.role_id IN (
+      SELECT id FROM role WHERE role_code IN ('STUDENT', 'LAB_ADMIN', 'TEACHER')
+  )
   AND RAND() > 0.7
 LIMIT 60;
 
--- ============================================
--- 8. 公告表 (35条)
--- ============================================
-INSERT INTO notice (title, content, publish_user_id, publish_time, status, is_top)
+-- 9. 生成公告记录（原 notice 表没有 is_top 字段）
+INSERT INTO notice (title, content, publish_user_id, publish_time, status)
 SELECT 
     CASE FLOOR(RAND() * 6)
         WHEN 0 THEN '实验室开放时间调整通知'
@@ -277,18 +276,52 @@ SELECT
            END,
            '请各位师生注意相关通知内容，合理安排实验时间。', 
            '详情请咨询实验室管理中心。'),
-    CASE WHEN RAND() > 0.7 THEN 1 ELSE 2 END,
+    CASE WHEN RAND() > 0.7 THEN (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1) ELSE (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1) END,
     DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 90) DAY),
-    CASE WHEN RAND() > 0.2 THEN 1 ELSE 0 END,
-    CASE WHEN RAND() > 0.9 THEN 1 ELSE 0 END
+    CASE WHEN RAND() > 0.2 THEN 1 ELSE 0 END
 FROM (SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) a,
      (SELECT 1 UNION SELECT 2 UNION SELECT 3) b
 LIMIT 35;
 
--- ============================================
--- 9. 更新设备状态（根据借用记录）
--- ============================================
--- 将正在借用中的设备状态更新为已借出
+-- 10. 追加固定公告数据
+INSERT INTO notice (title, content, publish_user_id, publish_time, status) VALUES
+('实验室开放时间调整通知', '各位师生：从5月1日起，实验室开放时间调整为周一至周五 8:00-22:00，周末 9:00-18:00。请相互转告。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-04-30 09:00:00', 1),
+('新设备采购到位通知', 'C栋405实验室新到一批数字示波器和信号发生器，欢迎各位同学预约使用。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-04-28 14:30:00', 1),
+('设备维护保养公告', '本周末（5月10日-11日）将对A栋、B栋实验室设备进行例行维护，届时部分设备暂停使用。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-05 10:00:00', 1),
+('五一假期值班安排', '五一假期期间（5月1日-5月5日），实验室管理中心安排值班，电话：0731-12345678。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-04-25 16:00:00', 1),
+('实验室安全培训通知', '定于5月20日下午2点在A栋101教室举办实验室安全培训，请全体实验员参加。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-08 11:00:00', 1),
+('设备借用规范提醒', '请各位师生借用设备后按时归还，逾期将影响后续借用权限。爱护设备，人人有责。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-04-20 09:30:00', 1),
+('服务器维护通知', '实验室管理系统服务器将于5月25日凌晨2:00-6:00进行升级维护，届时系统暂停使用。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-15 15:00:00', 1),
+('期末实验室使用须知', '期末临近，实验室使用高峰期，请同学们提前预约，合理使用设备。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-18 10:00:00', 1),
+('示波器使用培训通知', '本周四下午3点在C栋405举办示波器使用培训，欢迎报名参加。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-10 08:00:00', 1),
+('设备报废公示', '以下设备因年限过长已报废：DEV2023001（旧款投影仪）、DEV2023005（故障服务器）。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-04-15 14:00:00', 1),
+('暑期实验室开放安排', '暑期期间实验室正常开放，开放时间调整为周一至周五 9:00-17:00。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-20 09:00:00', 1),
+('新系统功能介绍', '实验室设备管理系统新增预约功能和逾期提醒功能，欢迎体验。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-01 10:00:00', 1),
+('紧急设备故障通知', 'C栋406实验室信号发生器故障，已联系维修，恢复时间另行通知。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-12 11:30:00', 1),
+('设备借用大数据分析报告', '2025年第一季度设备借用统计报告已发布，请在公告栏查看详情。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-04-10 16:00:00', 1),
+('实验室卫生检查通知', '下周一将进行实验室卫生检查，请各实验室做好清洁工作。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-19 08:00:00', 1),
+('设备二维码上线通知', '实验室设备已张贴二维码，扫描即可查看设备信息并申请借用。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-05 14:00:00', 1),
+('实验课程调整通知', '因教师出差，本周五下午的电子实验课暂停一次。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-16 09:00:00', 1),
+('设备借用排行榜', '本月设备借用排行榜：示波器、万用表、笔记本电脑位列前三。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-25 15:00:00', 1),
+('实验室搬迁通知', 'B栋实验室将于6月1日起搬迁至新楼，暂停使用两周。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-21 10:00:00', 1),
+('设备认领通知', '实验室发现遗留U盘、笔记本等物品，请失主于一楼值班室认领。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-14 09:00:00', 1),
+('教师借用绿色通道', '教师教学急需借用设备，可联系实验员优先处理。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-07 11:00:00', 1),
+('实验室夜间开放试点', 'A栋101、102实验室即日起试行24小时开放，需刷卡进入。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-22 16:00:00', 1),
+('设备捐赠感谢信', '感谢XX公司向本实验室捐赠10台示波器。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-04-18 10:00:00', 1),
+('学生助理招聘', '实验室管理中心招聘学生助理5名，有意者请提交简历。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-09 08:30:00', 1),
+('实验安全知识竞赛', '实验室安全知识竞赛将于6月10日举行，欢迎报名参加。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-23 14:00:00', 1),
+('设备操作视频上线', '常用设备操作教学视频已上传至系统，可在线观看。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-17 09:00:00', 1),
+('实验室意见征集', '为提升服务质量，现面向师生征集实验室管理意见。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-06 15:00:00', 1),
+('端午节放假通知', '端午节期间实验室闭馆一天，请提前做好设备归还。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-24 10:00:00', 0),
+('设备借用须知(长期)', '借用设备请爱惜使用，损坏需按规定赔偿。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-04-01 09:00:00', 1),
+('实验室数据备份提醒', '请各位同学及时备份实验数据，实验室电脑将于月底格式化。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-26 14:00:00', 1),
+('虚拟仿真平台上线', '虚拟仿真实验平台已上线，支持远程实验教学。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-11 10:00:00', 1),
+('实验室开放日', '6月1日将举办实验室开放日活动，欢迎参观体验。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-27 09:00:00', 1),
+('设备价格公示', '实验室设备价格及赔偿标准已公示，请在一楼公告栏查看。', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-13 16:00:00', 1),
+('期末设备归还通知', '请于6月30日前归还所有借用的设备，逾期将按天计费。', (SELECT id FROM `user` WHERE username = 'lab' LIMIT 1), '2025-05-28 08:00:00', 1),
+('祝毕业生前程似锦', '祝2025届毕业生前程似锦，感谢你们的陪伴！', (SELECT id FROM `user` WHERE username = 'admin' LIMIT 1), '2025-05-29 12:00:00', 1);
+
+-- 11. 根据借用记录更新设备状态
 UPDATE device d 
 SET d.status = 2 
 WHERE EXISTS (
@@ -296,7 +329,6 @@ WHERE EXISTS (
     WHERE br.device_id = d.id AND br.status = 1
 );
 
--- 将逾期未还的设备状态更新为已借出（未归还）
 UPDATE device d 
 SET d.status = 2 
 WHERE EXISTS (
@@ -304,11 +336,9 @@ WHERE EXISTS (
     WHERE br.device_id = d.id AND br.status = 3 AND br.return_time IS NULL
 );
 
--- ============================================
--- 10. 数据统计验证
--- ============================================
+-- 12. 数据统计验证
 SELECT '角色表' AS 表名, COUNT(*) AS 记录数 FROM role
-UNION SELECT '用户表', COUNT(*) FROM user
+UNION SELECT '用户表', COUNT(*) FROM `user`
 UNION SELECT '设备分类表', COUNT(*) FROM device_category
 UNION SELECT '设备表', COUNT(*) FROM device
 UNION SELECT '借用申请表', COUNT(*) FROM borrow_apply
@@ -317,7 +347,6 @@ UNION SELECT '报修记录表', COUNT(*) FROM repair_record
 UNION SELECT '公告表', COUNT(*) FROM notice
 ORDER BY 表名;
 
--- 设备状态统计
 SELECT 
     CASE status
         WHEN 1 THEN '可借'
@@ -330,7 +359,6 @@ SELECT
 FROM device
 GROUP BY status;
 
--- 借用记录状态统计
 SELECT 
     CASE status
         WHEN 1 THEN '借用中'
@@ -341,43 +369,3 @@ SELECT
     COUNT(*) AS 数量
 FROM borrow_record
 GROUP BY status;
-
--- ============================================
--- 公告表数据 (notice)
--- ============================================
-INSERT INTO notice (title, content, publish_user_id, publish_time, status) VALUES
-('实验室开放时间调整通知', '各位师生：从5月1日起，实验室开放时间调整为周一至周五 8:00-22:00，周末 9:00-18:00。请相互转告。', 1, '2025-04-30 09:00:00', 1),
-('新设备采购到位通知', 'C栋405实验室新到一批数字示波器和信号发生器，欢迎各位同学预约使用。', 2, '2025-04-28 14:30:00', 1),
-('设备维护保养公告', '本周末（5月10日-11日）将对A栋、B栋实验室设备进行例行维护，届时部分设备暂停使用。', 1, '2025-05-05 10:00:00', 1),
-('五一假期值班安排', '五一假期期间（5月1日-5月5日），实验室管理中心安排值班，电话：0731-12345678。', 2, '2025-04-25 16:00:00', 1),
-('实验室安全培训通知', '定于5月20日下午2点在A栋101教室举办实验室安全培训，请全体实验员参加。', 1, '2025-05-08 11:00:00', 1),
-('设备借用规范提醒', '请各位师生借用设备后按时归还，逾期将影响后续借用权限。爱护设备，人人有责。', 1, '2025-04-20 09:30:00', 1),
-('服务器维护通知', '实验室管理系统服务器将于5月25日凌晨2:00-6:00进行升级维护，届时系统暂停使用。', 2, '2025-05-15 15:00:00', 1),
-('期末实验室使用须知', '期末临近，实验室使用高峰期，请同学们提前预约，合理使用设备。', 1, '2025-05-18 10:00:00', 1),
-('示波器使用培训通知', '本周四下午3点在C栋405举办示波器使用培训，欢迎报名参加。', 2, '2025-05-10 08:00:00', 1),
-('设备报废公示', '以下设备因年限过长已报废：DEV2023001（旧款投影仪）、DEV2023005（故障服务器）。', 1, '2025-04-15 14:00:00', 1),
-('暑期实验室开放安排', '暑期期间实验室正常开放，开放时间调整为周一至周五 9:00-17:00。', 2, '2025-05-20 09:00:00', 1),
-('新系统功能介绍', '实验室设备管理系统新增预约功能和逾期提醒功能，欢迎体验。', 1, '2025-05-01 10:00:00', 1),
-('紧急设备故障通知', 'C栋406实验室信号发生器故障，已联系维修，恢复时间另行通知。', 2, '2025-05-12 11:30:00', 1),
-('设备借用大数据分析报告', '2025年第一季度设备借用统计报告已发布，请在公告栏查看详情。', 1, '2025-04-10 16:00:00', 1),
-('实验室卫生检查通知', '下周一将进行实验室卫生检查，请各实验室做好清洁工作。', 2, '2025-05-19 08:00:00', 1),
-('设备二维码上线通知', '实验室设备已张贴二维码，扫描即可查看设备信息并申请借用。', 1, '2025-05-05 14:00:00', 1),
-('实验课程调整通知', '因教师出差，本周五下午的电子实验课暂停一次。', 2, '2025-05-16 09:00:00', 1),
-('设备借用排行榜', '本月设备借用排行榜：示波器、万用表、笔记本电脑位列前三。', 1, '2025-05-25 15:00:00', 1),
-('实验室搬迁通知', 'B栋实验室将于6月1日起搬迁至新楼，暂停使用两周。', 2, '2025-05-21 10:00:00', 1),
-('设备认领通知', '实验室发现遗留U盘、笔记本等物品，请失主于一楼值班室认领。', 1, '2025-05-14 09:00:00', 1),
-('教师借用绿色通道', '教师教学急需借用设备，可联系实验员优先处理。', 2, '2025-05-07 11:00:00', 1),
-('实验室夜间开放试点', 'A栋101、102实验室即日起试行24小时开放，需刷卡进入。', 1, '2025-05-22 16:00:00', 1),
-('设备捐赠感谢信', '感谢XX公司向本实验室捐赠10台示波器。', 2, '2025-04-18 10:00:00', 1),
-('学生助理招聘', '实验室管理中心招聘学生助理5名，有意者请提交简历。', 1, '2025-05-09 08:30:00', 1),
-('实验安全知识竞赛', '实验室安全知识竞赛将于6月10日举行，欢迎报名参加。', 2, '2025-05-23 14:00:00', 1),
-('设备操作视频上线', '常用设备操作教学视频已上传至系统，可在线观看。', 1, '2025-05-17 09:00:00', 1),
-('实验室意见征集', '为提升服务质量，现面向师生征集实验室管理意见。', 2, '2025-05-06 15:00:00', 1),
-('端午节放假通知', '端午节期间实验室闭馆一天，请提前做好设备归还。', 1, '2025-05-24 10:00:00', 0),
-('设备借用须知(长期)', '借用设备请爱惜使用，损坏需按规定赔偿。', 1, '2025-04-01 09:00:00', 1),
-('实验室数据备份提醒', '请各位同学及时备份实验数据，实验室电脑将于月底格式化。', 2, '2025-05-26 14:00:00', 1),
-('虚拟仿真平台上线', '虚拟仿真实验平台已上线，支持远程实验教学。', 1, '2025-05-11 10:00:00', 1),
-('实验室开放日', '6月1日将举办实验室开放日活动，欢迎参观体验。', 2, '2025-05-27 09:00:00', 1),
-('设备价格公示', '实验室设备价格及赔偿标准已公示，请在一楼公告栏查看。', 1, '2025-05-13 16:00:00', 1),
-('期末设备归还通知', '请于6月30日前归还所有借用的设备，逾期将按天计费。', 2, '2025-05-28 08:00:00', 1),
-('祝毕业生前程似锦', '祝2025届毕业生前程似锦，感谢你们的陪伴！', 1, '2025-05-29 12:00:00', 1);
